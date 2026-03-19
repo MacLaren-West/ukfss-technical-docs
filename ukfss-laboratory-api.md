@@ -215,6 +215,7 @@ POST /api/lab/submit-sample-lab-results
 
 | Legacy Name                | API Field                    | Required |
 | -------------------------- | ---------------------------- | -------- |
+| *(New Field)*              | fsId                         | Yes      |
 | SampleNumber               | fsReference                  | Yes      |
 | LocalAuthorityCode         | authorityCode                | Yes      |
 | LocalAuthorityOfficeCode   | authorityOfficeCode          | Yes      |
@@ -234,6 +235,7 @@ POST /api/lab/submit-sample-lab-results
 
 | Legacy Name | API Field | Required |
 |------------|----------|----------|
+| *(New Field)* | laboratoryResultId | Yes |
 | ResultTimeStamp | resultTimestamp | Yes |
 | Determination | determinationCode | Yes |
 | TestSubstance | testSubstance | Yes |
