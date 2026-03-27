@@ -39,6 +39,17 @@ Header Value: {api-key}
 
 API keys are **environment-specific** and cannot be shared between test and production.
 
+### IP Address Allowlists
+
+API keys can optionally be restricted to specific IP addresses or ranges using CIDR notation. If an allowlist is configured for your key, requests from addresses not on the list will be rejected with a `401` response.
+
+- If no allowlist is configured, **all source IPs are permitted** (default behaviour)
+- Single IPs use `/32` notation: `203.0.113.45/32`
+- Ranges use standard CIDR notation: `10.0.0.0/8`
+- Multiple CIDR entries can be added to a single API key
+
+Contact MacLaren West support to request an allowlist be added or updated for your API key.
+
 ---
 
 ## 4. High-Level Workflow
