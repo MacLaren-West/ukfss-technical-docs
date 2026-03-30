@@ -41,7 +41,7 @@ API keys are **environment-specific** and cannot be shared between test and prod
 
 ### IP Address Allowlists
 
-API keys can optionally be restricted to specific IP addresses or ranges using CIDR notation. If an allowlist is configured for your key, requests from addresses not on the list will be rejected with a `401` response.
+API keys can be restricted to specific IP addresses or ranges using CIDR notation. If an allowlist is configured for your key, requests from addresses not on the list will be rejected with a `401` response.
 
 - If no allowlist is configured, **all source IPs are permitted** (default behaviour)
 - Single IPs use `/32` notation: `203.0.113.45/32`
