@@ -7,7 +7,7 @@ The UKFSS Laboratory API provides a **queue-based workflow** for laboratories to
 The API supports three core operations:
 
 1. **Download pending samples** assigned to the laboratory  
-2. **Accept or reject** each sample  
+2. **Accept, reject, or reset** each sample  
 3. **Upload laboratory results** for accepted samples  
 
 Each sample is uniquely identified by an `fsId`, which is used consistently across all API operations.
@@ -32,9 +32,16 @@ https://test.ukfss.org.uk
 
 All API requests must include an API key issued to your laboratory.
 
+The preferred header is the standard HTTP `Authorization` header:
+
 ```txt
-Header Name: api-key
-Header Value: {api-key}
+Authorization: Bearer {api-key}
+```
+
+The legacy `api-key` header is also supported for backwards compatibility:
+
+```txt
+api-key: {api-key}
 ```
 
 API keys are **environment-specific** and cannot be shared between test and production.
@@ -56,7 +63,7 @@ Contact MacLaren West support to request an allowlist be added or updated for yo
 
 ```text
 1. Retrieve pending samples
-2. Accept or reject each sample
+2. Accept, reject, or reset each sample
 3. Upload laboratory results for accepted samples
 4. Analysed samples leave the pending queue
 ```
@@ -65,7 +72,8 @@ Contact MacLaren West support to request an allowlist be added or updated for yo
 
 - Samples **must be accepted before results are submitted**
 - Rejected samples are **cancelled** and cannot be processed
-- Processed (analysed) samples **cannot be rejected**
+- A rejected sample can be **reset to pending** to undo a rejection, provided no results have been submitted
+- Processed (analysed) samples **cannot be rejected or reset**
 - Analysed samples **do not appear** in the pending queue
 
 ---
@@ -86,7 +94,7 @@ curl --location 'https://test.ukfss.org.uk/api/lab/pending-samples' \
 ```
 
 ### Example Response  
-*(2 of 10 records shown — test environment only)*
+*(2 of 10 records shown, test environment only)*
 
 ```json
 {
@@ -121,12 +129,12 @@ The pending samples queue contains **unprocessed and unaccepted samples only**.
 
 ---
 
-## 6. Confirm Sample Acceptance or Rejection
+## 6. Set Sample Status
 
 ### Endpoint
 
 ```http
-POST /api/samples/status
+POST /api/lab/set-lab-sample-status
 ```
 
 ### Request Body
@@ -134,8 +142,8 @@ POST /api/samples/status
 | Field | Type | Required | Description |
 |------|------|----------|-------------|
 | fsId | integer | Yes | Sample identifier |
-| labStatus | string | Yes | `accept` or `reject` |
-| labStatusDescription | string | Conditional | Required if rejected |
+| labStatus | string | Yes | `accept`, `reject`, or `pending` |
+| labStatusDescription | string | Conditional | Required if rejecting |
 
 #### Accept Example
 
@@ -156,11 +164,22 @@ POST /api/samples/status
 }
 ```
 
-### Rejection Rules
+#### Reset to Pending Example
 
-- Rejected samples are marked as **cancelled**
-- Cancelled samples require **reactivation** before reprocessing
-- Samples **cannot be rejected once results exist**
+```json
+{
+  "fsId": 488667,
+  "labStatus": "pending",
+  "labStatusDescription": "Accepted in error, returning to queue"
+}
+```
+
+### Status Rules
+
+- Accepted samples appear in the pending queue until results are submitted
+- Rejected samples are marked as **cancelled**; use `reject` if a sample cannot be processed. There is no separate cancel operation
+- A sample can be **reset to `pending`** to undo an accidental accept or reject, provided no results have been submitted
+- Samples **cannot be rejected or reset once results exist**
 
 ---
 
