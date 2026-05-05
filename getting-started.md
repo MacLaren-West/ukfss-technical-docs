@@ -52,19 +52,21 @@ Contact MacLaren West support to request an allowlist be added or updated for yo
 
 ```text
 1. Retrieve pending samples
-2. Accept, reject, or reset each sample
-3. Upload laboratory results for accepted samples
+2. Optionally set sample status (accept, reject, or reset)
+3. Upload laboratory results
 ```
 
 Samples leave the pending queue when **accepted**, **rejected**, or **analysed**.
 
-### Behavioural Guarantees
+### Status Behaviour
 
-- Samples **must be accepted before results are submitted**
-- Rejected samples are **cancelled** and cannot be processed
-- A rejected sample can be **reset to pending** to undo a rejection, provided no results have been submitted
-- Processed (analysed) samples **cannot be rejected or reset**
-- Analysed samples **do not appear** in the pending queue
+Sample statuses exist to control visibility in the pending queue — the system does not reject results based on status.
+
+- **Accept** — removes the sample from the pending queue; use to acknowledge receipt
+- **Reject** — marks the sample as cancelled and removes it from the pending queue; use if the sample cannot be processed
+- **Reset to pending** — returns a previously accepted or rejected sample to the queue
+- A sample can only be reset if **no results have been submitted** for it
+- Once results are submitted, the status cannot be changed
 
 ---
 

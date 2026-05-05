@@ -102,10 +102,11 @@ POST /api/lab/set-lab-sample-status
 
 ### Status Rules
 
-- Accepted samples appear in the pending queue until results are submitted
-- Rejected samples are marked as **cancelled**; use `reject` if a sample cannot be processed. There is no separate cancel operation
-- A sample can be **reset to `pending`** to undo an accidental accept or reject, provided no results have been submitted
-- Samples **cannot be rejected or reset once results exist**
+- Statuses control visibility in the pending queue — the system does not reject results based on sample status
+- **Accept** removes the sample from the pending queue
+- **Reject** marks the sample as cancelled and removes it from the pending queue; there is no separate cancel operation
+- **Reset to pending** returns an accepted or rejected sample to the queue, provided no results have been submitted
+- Once results exist, the status cannot be changed
 
 ---
 
@@ -119,8 +120,8 @@ POST /api/lab/submit-sample-lab-results
 
 ### Submission Rules
 
-- Results may only be submitted for **accepted samples**
-- Submitting results changes the sample's status to **analysis complete**
+- Results can be submitted regardless of the sample's accept/reject status
+- Submitting results changes the sample's status to **analysis complete** and removes it from the pending queue
 
 ### Example Payload
 
