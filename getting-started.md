@@ -54,8 +54,9 @@ Contact MacLaren West support to request an allowlist be added or updated for yo
 1. Retrieve pending samples
 2. Accept, reject, or reset each sample
 3. Upload laboratory results for accepted samples
-4. Analysed samples leave the pending queue
 ```
+
+Samples leave the pending queue when **accepted**, **rejected**, or **analysed**.
 
 ### Behavioural Guarantees
 
