@@ -1,5 +1,11 @@
 # UKFSS Laboratory API
 
+> **This document has been reorganised.**
+> The content is now split into separate sections for easier navigation.
+> Please update your bookmarks to the [UKFSS Laboratory API documentation](README.md).
+
+---
+
 ## 1. Overview
 
 The UKFSS Laboratory API provides a **queue-based workflow** for laboratories to retrieve samples, confirm their status, and upload processed laboratory results.
