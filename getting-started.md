@@ -6,11 +6,10 @@
 
 ## Environments & Base URL
 
-### Test Environment
-
-```txt
-https://test.ukfss.org.uk
-```
+| Environment | Base URL |
+| :---------- | :------- |
+| Test | `https://test.ukfss.org.uk` |
+| Live | `https://api.ukfss.org.uk` |
 
 - Test environment limits pending samples to **10 records**
 - Production environment returns **all pending samples**
