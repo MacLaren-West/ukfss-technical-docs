@@ -313,7 +313,7 @@ curl --location 'https://test.ukfss.org.uk/api/lab/sample?fsId=488669' \
 
 ## 10. Determinations
 
-Returns the full list of determination codes, including test substance and units.
+Returns the full list of determination codes, including test substance and units. Results can be filtered by sample type.
 
 ### Endpoint
 
@@ -321,10 +321,28 @@ Returns the full list of determination codes, including test substance and units
 GET /api/lab/get-determinations
 ```
 
-### Example Request
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+| :-------- | :--- | :------- | :---------- |
+| `forFood` | boolean | No | If `true`, returns only determinations applicable to food samples |
+| `forFeed` | boolean | No | If `true`, returns only determinations applicable to animal feed samples |
+
+Both parameters can be combined. If neither is supplied, all determinations are returned.
+
+### Example Requests
 
 ```bash
+# All determinations
 curl --location 'https://test.ukfss.org.uk/api/lab/get-determinations' \
+--header 'api-key: {api-key}'
+
+# Food only
+curl --location 'https://test.ukfss.org.uk/api/lab/get-determinations?forFood=true' \
+--header 'api-key: {api-key}'
+
+# Animal feed only
+curl --location 'https://test.ukfss.org.uk/api/lab/get-determinations?forFeed=true' \
 --header 'api-key: {api-key}'
 ```
 
@@ -334,7 +352,7 @@ The response is the live reference data from the UKFSS database. For background 
 
 ## 11. Outcome Codes
 
-Returns the full list of outcome codes used in result and sample-level outcomes.
+Returns the full list of outcome codes used in result and sample-level outcomes. Results can be filtered by sample type.
 
 ### Endpoint
 
@@ -342,10 +360,28 @@ Returns the full list of outcome codes used in result and sample-level outcomes.
 GET /api/lab/get-outcomes
 ```
 
-### Example Request
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+| :-------- | :--- | :------- | :---------- |
+| `forFood` | boolean | No | If `true`, returns only outcomes applicable to food samples |
+| `forFeed` | boolean | No | If `true`, returns only outcomes applicable to animal feed samples |
+
+Both parameters can be combined. If neither is supplied, all outcomes are returned.
+
+### Example Requests
 
 ```bash
+# All outcomes
 curl --location 'https://test.ukfss.org.uk/api/lab/get-outcomes' \
+--header 'api-key: {api-key}'
+
+# Food only
+curl --location 'https://test.ukfss.org.uk/api/lab/get-outcomes?forFood=true' \
+--header 'api-key: {api-key}'
+
+# Animal feed only
+curl --location 'https://test.ukfss.org.uk/api/lab/get-outcomes?forFeed=true' \
 --header 'api-key: {api-key}'
 ```
 
