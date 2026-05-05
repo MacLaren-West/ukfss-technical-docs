@@ -4,11 +4,13 @@
 
 The UKFSS Laboratory API provides a **queue-based workflow** for laboratories to retrieve samples, confirm their status, and upload processed laboratory results.
 
-The API supports three core operations:
+The API supports the following operations:
 
 1. **Download pending samples** assigned to the laboratory  
 2. **Accept, reject, or reset** each sample  
 3. **Upload laboratory results** for accepted samples  
+4. **Retrieve an individual sample** by ID or reference  
+5. **Look up reference data** for determinations and outcome codes  
 
 Each sample is uniquely identified by an `fsId`, which is used consistently across all API operations.
 
@@ -287,7 +289,71 @@ POST /api/lab/submit-sample-lab-results
 
 ---
 
-## 9. Reference Data
+## 9. Get Individual Sample
+
+Retrieve a single sample by `fsId` or `fsReference`. Useful for checking the current status of a specific sample without downloading the full pending queue.
+
+### Endpoint
+
+```http
+GET /api/lab/sample?fsId={fsId}
+GET /api/lab/sample?fsReference={fsReference}
+```
+
+One of `fsId` or `fsReference` must be provided. Results are scoped to laboratories associated with the calling API key.
+
+### Example Request
+
+```bash
+curl --location 'https://test.ukfss.org.uk/api/lab/sample?fsId=488669' \
+--header 'api-key: {api-key}'
+```
+
+---
+
+## 10. Determinations
+
+Returns the full list of determination codes, including test substance and units.
+
+### Endpoint
+
+```http
+GET /api/lab/get-determinations
+```
+
+### Example Request
+
+```bash
+curl --location 'https://test.ukfss.org.uk/api/lab/get-determinations' \
+--header 'api-key: {api-key}'
+```
+
+The response is the live reference data from the UKFSS database. For background on the determination structure and a sample extract, see the [Generic LIMS documentation](https://docs.ukfss.org.uk/generic-lims/html/generic-lims-and-fss.html#appendix-vi-lab-determinations-extract).
+
+---
+
+## 11. Outcome Codes
+
+Returns the full list of outcome codes used in result and sample-level outcomes.
+
+### Endpoint
+
+```http
+GET /api/lab/get-outcomes
+```
+
+### Example Request
+
+```bash
+curl --location 'https://test.ukfss.org.uk/api/lab/get-outcomes' \
+--header 'api-key: {api-key}'
+```
+
+The response is the live reference data from the UKFSS database. For background on the outcome code structure and the full fail code breakdown by category, see the [Generic LIMS documentation](https://docs.ukfss.org.uk/generic-lims/html/generic-lims-and-fss.html#appendix-vii-outcome-failcodes).
+
+---
+
+## 12. Reference Data
 
 ```http
 GET /api/SampleEntry/GetReferenceData?dataType={datatype}
@@ -314,7 +380,7 @@ GET /api/SampleEntry/GetReferenceData?dataType={datatype}
 
 ---
 
-## 10. Constraints & Validation
+## 13. Constraints & Validation
 
 - All dates are UTC
 - `fsId` is immutable
@@ -322,7 +388,7 @@ GET /api/SampleEntry/GetReferenceData?dataType={datatype}
 - Additional JSON properties are rejected
 - Each result must include either `textResult` or `numericResult`
 
-## 11. Client Field Mapping
+## 14. Client Field Mapping
 
 This is a list of all fields available for import from the Client (UKFSS Desktop) to the laboratory.
 
