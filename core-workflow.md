@@ -47,11 +47,11 @@ curl --location 'https://test.ukfss.org.uk/api/lab/pending-samples' \
 
 ### Pending Queue Definition
 
-The pending samples queue contains **unprocessed and unaccepted samples only**.
+The pending queue contains only samples that have **not yet been accepted, rejected, or analysed**.
 
-- Accepted but unanalysed samples remain pending
-- Analysed samples do not appear
+- Accepted samples do not appear
 - Cancelled (rejected) samples do not appear
+- Analysed samples do not appear
 
 ---
 
