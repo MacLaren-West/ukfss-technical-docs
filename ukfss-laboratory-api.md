@@ -233,6 +233,16 @@ POST /api/lab/submit-sample-lab-results
           "numericResult": 12.3,
           "numericResultQualifier": "=",
           "outcomeCode": "10100"
+        },
+        {
+          "laboratoryResultId": "R-2",
+          "resultTimestamp": "2025-10-21T11:30:00Z",
+          "determinationCode": "ZLABEL",
+          "testSubstance": "Labelling Assessment",
+          "testUnits": "n/a",
+          "resultTypeCode": "TEXT",
+          "formattedOutput": "Unsatisfactory",
+          "outcomeCode": "L0283"
         }
       ],
       "outcomes": [
@@ -428,7 +438,9 @@ GET /api/SampleEntry/GetReferenceData?dataType={datatype}
 - `fsId` is immutable
 - Payloads must strictly match the defined schema
 - Additional JSON properties are rejected
-- Each result must include either `textResult` or `numericResult`
+- Each result must include either `textResult` or `numericResult`, with the following rules by result type:
+  - `resultTypeCode: "NUMERIC"` — `numericResult` and `numericResultQualifier` are required; `textResult` is not used
+  - `resultTypeCode: "TEXT"` — `textResult` may be supplied, or the value may be omitted and `formattedOutput` will be used as the stored result value
 
 ## 14. Client Field Mapping
 
