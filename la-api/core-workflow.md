@@ -183,17 +183,22 @@ The `success` field in the response body indicates whether the sample is valid:
 
 #### `success: false` — saved but failed validation
 
-The record is stored, but the `data` array lists the problems that must be resolved before the sample can proceed to the laboratory.
+The record is stored, but the `errors` array lists the problems that must be resolved before the sample can proceed to the laboratory. The `data` object contains the saved sample.
 
 ```json
 {
   "success": false,
-  "data": [
+  "data": {
+    "fsId": 98739,
+    "fsReference": "VZTC",
+    "fsStatusCode": "ENTERED",
+    "..."
+  },
+  "errors": [
     {
-      "id": 185,
-      "updateLogId": 570,
-      "message": "fsRecordTypeCode is required",
-      "Success": false
+      "field": "fsRecordTypeCode",
+      "code": "required",
+      "message": "fsRecordTypeCode is required"
     }
   ]
 }
