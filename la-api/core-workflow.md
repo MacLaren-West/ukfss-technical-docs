@@ -181,6 +181,24 @@ The `success` field in the response body indicates whether the sample is valid:
 }
 ```
 
+#### `success: false` — request error
+
+Returned when the request cannot be processed (e.g. a malformed body). No record is created or updated.
+
+```json
+{
+  "success": false,
+  "data": null,
+  "errors": [
+    {
+      "field": null,
+      "code": "save_error",
+      "message": "An item with the same key has already been added. Key: fsRecordTypeCode (Parameter 'key')"
+    }
+  ]
+}
+```
+
 #### `success: false` — saved but failed validation
 
 The record is stored, but the `errors` array lists the problems that must be resolved before the sample can proceed to the laboratory. The `data` object contains the saved sample.
@@ -210,16 +228,19 @@ On a successful submission the response includes two identifiers — **store bot
 
 | Field | Type | Use |
 | :---- | :--- | :-- |
-| `fsId` | integer | Use for API calls — pass to `GetSingleRecord` and any future endpoints |
-| `fsReference` | string | The UKFSS sample number (e.g. `"80100000001"`) — appears on paperwork and in the UKFSS portal |
+| `fsId` | integer | Use for API calls — pass to `GetSingleRecord`, and include in re-submissions to update an existing record |
+| `fsReference` | string | The UKFSS sample number (e.g. `"80100000001"`) — appears on paperwork and in the UKFSS portal. Read-only once assigned. |
 
-If `fsReference` is included in a subsequent submission it updates the existing record rather than creating a new one. If it is omitted, a new record is always created.
+To update an existing record, include the `fsId` returned from the original Save response in your re-submission. If `fsId` is omitted, a new record is always created.
+
+`fsReference` is assigned by UKFSS and cannot be changed — if included in a re-submission it is ignored.
 
 ---
 
 ### Submission Rules
 
-- Omit `fsReference` for new samples — it is assigned by UKFSS on creation
+- Omit `fsId` for new samples — include it only when updating an existing record
+- Never include `fsReference` in a submission — it is assigned by UKFSS on creation and is read-only thereafter
 - Never set `fsStatusCode` — it is always assigned and managed by UKFSS. If a status transition is needed in future, a dedicated endpoint will be provided for that purpose
 - `fsRecordTypeCode` must be `"FOOD"` or `"ANIMAL FEED"` (with space)
 - `fsAnalysisTypeCode` must be `"C"` (chemical) or `"M"` (microbiology)
