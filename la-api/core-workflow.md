@@ -228,20 +228,29 @@ On a successful submission the response includes two identifiers — **store bot
 
 | Field | Type | Use |
 | :---- | :--- | :-- |
-| `fsId` | integer | Use for API calls — pass to `GetSingleRecord`, and include in re-submissions to update an existing record |
-| `fsReference` | string | The UKFSS sample number (e.g. `"80100000001"`) — appears on paperwork and in the UKFSS portal. Read-only once assigned. |
+| `fsId` | integer | Internal UKFSS record identifier. Use for `GetSingleRecord` and include in re-submissions alongside `fsReference`. |
+| `fsReference` | string | The UKFSS sample number — appears on paperwork and in the UKFSS portal. Read-only once assigned. Include in every re-submission. |
 
-To update an existing record, include **both** `fsId` and `fsReference` from the original Save response. If `fsId` is omitted, a new record is always created.
+#### Updating an existing record
 
-`fsReference` is assigned by UKFSS and cannot be changed, but it must be included alongside `fsId` in a re-submission. The values are cross-checked — if they do not belong to the same record, the request is rejected.
+The presence of `fsReference` in the body signals that a submission is an update. Three combinations are supported:
+
+| Submitted | Behaviour |
+| :-------- | :-------- |
+| `fsReference` only | Looked up by `fsReference`; record updated |
+| `fsId` + `fsReference` | Both cross-checked — must belong to the same record |
+| `fsId` only | Rejected — `fsReference` is required alongside `fsId` |
+| Neither | New record created; `fsReference` assigned by UKFSS |
+
+`fsReference` is assigned by UKFSS on creation and cannot be changed — including it in a re-submission identifies the record to update, it does not alter the reference.
 
 ---
 
 ### Submission Rules
 
-- Omit `fsId` for new samples — include it only when updating an existing record
-- When updating (`fsId` present), you must also include `fsReference` — both are cross-checked to confirm they belong to the same record
-- `fsReference` is assigned by UKFSS on creation and cannot be changed
+- Include `fsReference` in every re-submission — its presence signals an update rather than a new record
+- If `fsId` is also included, both values are cross-checked to confirm they belong to the same record
+- `fsReference` is read-only — it identifies the record but cannot be changed by a submission
 - Never set `fsStatusCode` — it is always assigned and managed by UKFSS. If a status transition is needed in future, a dedicated endpoint will be provided for that purpose
 - `fsRecordTypeCode` must be `"FOOD"` or `"ANIMAL FEED"` (with space)
 - `fsAnalysisTypeCode` must be `"C"` (chemical) or `"M"` (microbiology)
