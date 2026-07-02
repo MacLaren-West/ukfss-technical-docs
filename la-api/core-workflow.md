@@ -231,16 +231,17 @@ On a successful submission the response includes two identifiers — **store bot
 | `fsId` | integer | Use for API calls — pass to `GetSingleRecord`, and include in re-submissions to update an existing record |
 | `fsReference` | string | The UKFSS sample number (e.g. `"80100000001"`) — appears on paperwork and in the UKFSS portal. Read-only once assigned. |
 
-To update an existing record, include the `fsId` returned from the original Save response in your re-submission. If `fsId` is omitted, a new record is always created.
+To update an existing record, include **both** `fsId` and `fsReference` from the original Save response. If `fsId` is omitted, a new record is always created.
 
-`fsReference` is assigned by UKFSS and cannot be changed — if included in a re-submission it is ignored.
+`fsReference` is assigned by UKFSS and cannot be changed, but it must be included alongside `fsId` in a re-submission. The values are cross-checked — if they do not belong to the same record, the request is rejected.
 
 ---
 
 ### Submission Rules
 
 - Omit `fsId` for new samples — include it only when updating an existing record
-- Never include `fsReference` in a submission — it is assigned by UKFSS on creation and is read-only thereafter
+- When updating (`fsId` present), you must also include `fsReference` — both are cross-checked to confirm they belong to the same record
+- `fsReference` is assigned by UKFSS on creation and cannot be changed
 - Never set `fsStatusCode` — it is always assigned and managed by UKFSS. If a status transition is needed in future, a dedicated endpoint will be provided for that purpose
 - `fsRecordTypeCode` must be `"FOOD"` or `"ANIMAL FEED"` (with space)
 - `fsAnalysisTypeCode` must be `"C"` (chemical) or `"M"` (microbiology)
