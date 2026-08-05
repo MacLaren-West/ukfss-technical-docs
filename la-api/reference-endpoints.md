@@ -123,8 +123,8 @@ The animal species list returns objects with a `value` code and a `label` taken 
 
 ```json
 [
-  { "value": "09.01", "label": "Poultry" },
-  { "value": "09.02", "label": "Cattle" }
+  { "value": "00.01", "label": "Cattle" },
+  { "value": "00.08", "label": "Sheep" }
 ]
 ```
 
