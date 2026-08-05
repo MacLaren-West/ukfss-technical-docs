@@ -6,7 +6,9 @@ The API supports the following operations:
 
 1. **Submit samples** — push sample records from your system into UKFSS
 2. **Retrieve a submitted sample** — look up a sample by its UKFSS record ID
-3. **Look up reference data** — retrieve valid codes for food categories, premises types, conditions, and more
+3. **List samples ready for export** — retrieve `VALIDATED` samples awaiting submission to a laboratory
+4. **Submit a batch to the lab** — send a batch of your own validated samples to their assigned laboratory
+5. **Look up reference data** — retrieve valid codes for food categories, premises types, conditions, and more
 
 Each sample is uniquely identified by an `fsId` once created. The `authorityReference` field carries your own system's sample number throughout.
 

@@ -286,4 +286,148 @@ curl --location 'https://test.ukfss.org.uk/api/v1/sample-entry/get-single-record
 
 ---
 
+## 3. List Samples Ready for Export
+
+Retrieve every `VALIDATED` sample for your authority that is awaiting export to a laboratory. Use this to build the list of `sampleReference` values for a submit-to-lab batch.
+
+### Endpoint
+
+```http
+GET /api/v1/sample-export/candidate-samples?authorityCode={authorityCode}&personality={personality}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| :-------- | :--- | :------- | :---------- |
+| `authorityCode` | string | Yes | Your local authority code — must match the LA associated with your API key |
+| `personality` | string | Yes | `"FOOD"` or `"ANIMAL FEED"`. `"ALL"` is not yet available via this endpoint |
+
+### Example Request
+
+```bash
+curl --location 'https://test.ukfss.org.uk/api/v1/sample-export/candidate-samples?authorityCode=806&personality=FOOD' \
+--header 'api-key: {api-key}'
+```
+
+### Response
+
+An array of candidate samples. Only samples currently in `VALIDATED` status are included — a sample already exported, or one still `ENTERED`, will not appear.
+
+```json
+[
+  {
+    "id": 100001,
+    "reference": "80600000123",
+    "laReference": "LA-2025-001234",
+    "officerCode": "SO123",
+    "officerName": "J. Smith",
+    "officerEmail": "j.smith@council.gov.uk",
+    "officeCode": "806-01",
+    "officeName": "Headquarters",
+    "laboratoryCode": "LAB001",
+    "laboratoryName": "Example Laboratory",
+    "premisesCode": "BUS-12345",
+    "premises": "Fresh Foods Ltd",
+    "foodDescription": "Pre-packed chicken slices",
+    "analysisTypeCode": "C",
+    "dateTaken": "2025-10-15T10:30:00"
+  }
+]
+```
+
+| Field | Notes |
+| :---- | :---- |
+| `reference` | The `fsReference` value — use this in `sampleReferences` when submitting to a lab |
+| `laboratoryCode` | The lab this sample is currently assigned to. A submit-to-lab request's `laboratoryCode` must match this exactly, or the sample is rejected |
+| `analysisTypeCode` | `"C"` (chemical) or `"M"` (microbiology) |
+
+---
+
+## 4. Submit a Batch to the Lab
+
+Submit a batch of your authority's own `VALIDATED` samples to a laboratory — the external equivalent of clicking "Export" in the UKFSS portal.
+
+**Whole-batch contract:** every referenced sample must currently be `VALIDATED`, belong to your authority, and be assigned to the laboratory you specify. If any one of them isn't, **nothing is exported** — the response lists exactly which references failed and why, so you can correct the list and re-submit. There is no partial success.
+
+### Endpoint
+
+```http
+POST /api/v1/sample-export/submit-to-lab
+```
+
+### Request Body
+
+| Field | Type | Required | Notes |
+| :---- | :--- | :------- | :---- |
+| `authorityCode` | string | Yes | Your local authority code |
+| `personality` | string | Yes | `"FOOD"` or `"ANIMAL FEED"` |
+| `laboratoryCode` | string | Yes | Must match the `laboratoryCode` already assigned to every sample in the batch |
+| `sampleReferences` | array of string | Yes | The `fsReference` values to export — at least one required |
+| `comment` | string | No | Free-text note. Appended to the lab's notification under its own heading — it does not replace the standard sample breakdown the lab receives |
+
+### Example Request
+
+```bash
+curl --location --request POST 'https://test.ukfss.org.uk/api/v1/sample-export/submit-to-lab' \
+--header 'api-key: {api-key}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "authorityCode": "806",
+  "personality": "FOOD",
+  "laboratoryCode": "LAB001",
+  "sampleReferences": ["80600000123", "80600000124"],
+  "comment": "Second delivery today, cold chain intact"
+}'
+```
+
+### Response
+
+#### Success
+
+```json
+{
+  "batchId": 1234,
+  "sampleCount": 2,
+  "sampleCodes": ["80600000123", "80600000124"]
+}
+```
+
+`sampleCount` always equals the number of references sent — there is no partial success. `batchId` identifies this export in UKFSS's own records.
+
+#### `409 Conflict` — one or more samples not eligible
+
+```json
+{
+  "message": "One or more samples are not eligible for this batch. No samples were exported.",
+  "failures": [
+    {
+      "sampleReference": "80600000125",
+      "reason": "Not found, not VALIDATED, or not assigned to this laboratory."
+    },
+    {
+      "sampleReference": "80600000123",
+      "reason": "Listed more than once in this batch."
+    }
+  ]
+}
+```
+
+A reference can fail for any of these reasons:
+
+- It doesn't exist, isn't `VALIDATED`, or isn't assigned to the `laboratoryCode` you specified
+- It's listed more than once in the same request
+- It went stale between your last `candidate-samples` read and this submission (edited, unvalidated, re-routed to a different lab, or already exported by someone else)
+
+Re-fetch `candidate-samples` and retry with a corrected list.
+
+### Submission Rules
+
+- Check `candidate-samples` first — every `sampleReference` must already be `VALIDATED` and assigned to the `laboratoryCode` you specify
+- A duplicate reference in the same request is rejected, not silently de-duplicated
+- The whole batch succeeds or the whole batch fails — there is no partial export
+- `personality` must be `"FOOD"` or `"ANIMAL FEED"` (with space) — `"ALL"` is not yet available via this endpoint
+
+---
+
 [← Getting Started](getting-started.md) | [Next: Reference Endpoints →](reference-endpoints.md)
