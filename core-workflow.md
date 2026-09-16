@@ -122,6 +122,9 @@ POST /api/lab/submit-sample-lab-results
 
 - Results can be submitted regardless of the sample's accept/reject status
 - Submitting results changes the sample's status to **analysis complete** and removes it from the pending queue
+- Each sample is matched on `fsReference`. `fsId` is optional and isn't used to find the sample; the response reports the matched sample's `fsId`
+- A sample is **rejected** if its `fsReference` is missing or matches no sample, or if the sample isn't assigned to your laboratory
+- A missing value for any other **Required** or **Conditional** sample or result field in the [field mappings](appendix.md#data-model--field-mappings) produces a **warning**, and the sample is still accepted. If your laboratory uses **strict validation**, the sample is rejected instead. Contact MacLaren West support to change your laboratory's validation mode.
 
 ### Example Payload
 
@@ -129,7 +132,6 @@ POST /api/lab/submit-sample-lab-results
 {
   "samples": [
     {
-      "fsId": "11234",
       "fsReference": "FS-24-000123",
       "authorityCode": "AB12",
       "authorityOfficeCode": "AB12-01",
@@ -163,6 +165,31 @@ POST /api/lab/submit-sample-lab-results
   ]
 }
 ```
+
+### Example Response
+
+For the payload above with `laboratoryComments` left out:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "sampleIndex": 0,
+      "fsId": 100001,
+      "success": true,
+      "messages": [
+        { "message": "laboratoryComments is required", "severity": "warning" }
+      ]
+    }
+  ]
+}
+```
+
+- `data` has one entry per submitted sample. `sampleIndex` is the sample's position in the `samples` array, starting at 0
+- The top-level `success` is `true` only when every sample in the request was accepted
+- `messages` is `null` when there is nothing to report. Otherwise each message has a `severity`: `error` means the sample was rejected, `warning` means it was accepted
+- If your laboratory uses strict validation, messages have no `severity` field. Every message is an error, so `messages` is `null` whenever a sample is accepted
 
 ---
 
