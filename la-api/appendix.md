@@ -23,7 +23,7 @@ All fields accepted by `POST /api/SampleEntry/Save`. Fields not marked required 
 | Field | Type | Notes |
 | :---- | :--- | :---- |
 | `authorityCode` | string | **Required.** Your local authority code — must match an authority your API key is authorised for. Returns `403` if missing or mismatched |
-| `authorityOfficeCode` | string | **Required.** The sampling office code |
+| `authorityOfficeCode` | string | **Required.** The sampling office's full code: your authority code followed by the office's own code, e.g. `999HQ` for office `HQ` in authority `999`. Must be an office set up for your authority in UKFSS, otherwise the sample is rejected with `Invalid authorityOfficeCode` |
 | `authorityReference` | string | Your system's own sample reference |
 | `authorityDateTimeSampleTaken` | string | **Required.** ISO 8601 datetime, e.g. `"2025-10-15T10:30:00"`. Seconds are optional — `"2025-10-15T10:30"` is also accepted. Use `"T03:00:00"` if time is unknown |
 | `authoritySamplingOfficerCode` | string | **Required.** Sampling officer code. GUID-length values are supported |

@@ -29,7 +29,7 @@ curl --location 'https://test.ukfss.org.uk/api/lab/pending-samples' \
       "fsId": 100001,
       "fsRecordTypeCode": "FOOD",
       "fsAnalysisTypeCode": "C",
-      "fsReference": "80100000001",
+      "fsReference": "99900000001",
       "fsStatusCode": "EXPORTED",
       ...
     },
@@ -37,7 +37,7 @@ curl --location 'https://test.ukfss.org.uk/api/lab/pending-samples' \
       "fsId": 100002,
       "fsRecordTypeCode": "FOOD",
       "fsAnalysisTypeCode": "C",
-      "fsReference": "80100000002",
+      "fsReference": "99900000002",
       "fsStatusCode": "EXPORTED",
       ...
     }
@@ -131,8 +131,8 @@ POST /api/lab/submit-sample-lab-results
     {
       "fsId": "11234",
       "fsReference": "FS-24-000123",
-      "authorityCode": "AB12",
-      "authorityOfficeCode": "AB12-01",
+      "authorityCode": "999",
+      "authorityOfficeCode": "999HQ",
       "authorityReference": "LA-7788",
       "laboratoryComments": "No anomalies in intake.",
       "laboratoryReference": "LIMS-998877",

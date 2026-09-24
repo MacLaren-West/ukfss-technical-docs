@@ -28,7 +28,7 @@ The body is a single JSON object. Fields not listed in the required tables below
 | `fsAnalysisTypeCode` | string | `"C"` (chemical) or `"M"` (microbiology) |
 | `authorityCode` | string | Your local authority code — must match the LA associated with your API key. The request is rejected with `403` if this does not match |
 | `authorityDateTimeSampleTaken` | string | ISO 8601 datetime, e.g. `"2025-10-15T10:30:00"` or `"2025-10-15T10:30"` |
-| `authorityOfficeCode` | string | The sampling office code |
+| `authorityOfficeCode` | string | The sampling office's full code: your authority code followed by the office's own code, e.g. `999HQ` for office `HQ` in authority `999`. Must be an office set up for your authority in UKFSS |
 | `authoritySamplingOfficerCode` | string | Sampling officer code. GUID values are supported |
 | `laboratoryCode` | string | Code of the assigned laboratory — must be a valid lab code |
 | `laboratoryRoutineAnalysisRequired` | boolean | `true` or `false` |
@@ -84,8 +84,8 @@ curl --location --request POST 'https://test.ukfss.org.uk/api/v1/sample-entry/sa
   "fsReference": null,
   "fsStatusCode": null,
   "fsAdditionalInformation": null,
-  "authorityCode": "806",
-  "authorityOfficeCode": "806-01",
+  "authorityCode": "999",
+  "authorityOfficeCode": "999HQ",
   "authorityReference": "LA-2025-001234",
   "authorityDateTimeSampleTaken": "2025-10-15T10:30:00",
   "authoritySamplingOfficerCode": "SO123",
@@ -94,7 +94,7 @@ curl --location --request POST 'https://test.ukfss.org.uk/api/v1/sample-entry/sa
   "authorityComments": "Sample taken from display cabinet",
   "authorityPurchaseCost": 4.99,
   "authorityAnalysisCost": null,
-  "laboratoryCode": "LAB001",
+  "laboratoryCode": "PATST",
   "laboratoryRoutineAnalysisRequired": false,
   "laboratoryAnalysisRequiredDetail": "Chloramphenicol, Tetracycline",
   "premisesBusinessId": "BUS-12345",
@@ -171,7 +171,7 @@ The `success` field in the response body indicates whether the sample is valid:
   "success": true,
   "data": {
     "fsId": 100001,
-    "fsReference": "80100000001",
+    "fsReference": "99900000001",
     "fsStatusCode": "ENTERED",
     ...
     "messages": [
@@ -306,7 +306,7 @@ GET /api/v1/sample-export/candidate-samples?authorityCode={authorityCode}&person
 ### Example Request
 
 ```bash
-curl --location 'https://test.ukfss.org.uk/api/v1/sample-export/candidate-samples?authorityCode=806&personality=FOOD' \
+curl --location 'https://test.ukfss.org.uk/api/v1/sample-export/candidate-samples?authorityCode=999&personality=FOOD' \
 --header 'api-key: {api-key}'
 ```
 
@@ -318,14 +318,14 @@ An array of candidate samples. Only samples currently in `VALIDATED` status are 
 [
   {
     "id": 100001,
-    "reference": "80600000123",
+    "reference": "99900000123",
     "laReference": "LA-2025-001234",
     "officerCode": "SO123",
     "officerName": "J. Smith",
     "officerEmail": "j.smith@council.gov.uk",
-    "officeCode": "806-01",
+    "officeCode": "999HQ",
     "officeName": "Headquarters",
-    "laboratoryCode": "LAB001",
+    "laboratoryCode": "PATST",
     "laboratoryName": "Example Laboratory",
     "premisesCode": "BUS-12345",
     "premises": "Fresh Foods Ltd",
@@ -373,10 +373,10 @@ curl --location --request POST 'https://test.ukfss.org.uk/api/v1/sample-export/s
 --header 'api-key: {api-key}' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-  "authorityCode": "806",
+  "authorityCode": "999",
   "personality": "FOOD",
-  "laboratoryCode": "LAB001",
-  "sampleReferences": ["80600000123", "80600000124"],
+  "laboratoryCode": "PATST",
+  "sampleReferences": ["99900000123", "99900000124"],
   "comment": "Second delivery today, cold chain intact"
 }'
 ```
@@ -389,7 +389,7 @@ curl --location --request POST 'https://test.ukfss.org.uk/api/v1/sample-export/s
 {
   "batchId": 1234,
   "sampleCount": 2,
-  "sampleCodes": ["80600000123", "80600000124"]
+  "sampleCodes": ["99900000123", "99900000124"]
 }
 ```
 
@@ -402,11 +402,11 @@ curl --location --request POST 'https://test.ukfss.org.uk/api/v1/sample-export/s
   "message": "One or more samples are not eligible for this batch. No samples were exported.",
   "failures": [
     {
-      "sampleReference": "80600000125",
+      "sampleReference": "99900000125",
       "reason": "Not found, not VALIDATED, or not assigned to this laboratory."
     },
     {
-      "sampleReference": "80600000123",
+      "sampleReference": "99900000123",
       "reason": "Listed more than once in this batch."
     }
   ]
