@@ -77,7 +77,7 @@ All fields accepted by `POST /api/SampleEntry/Save`. Fields not marked required 
 | Field | Type | Notes |
 | :---- | :--- | :---- |
 | `detailDescription` | string | Description of the sample — required for food samples |
-| `detailCategoryCode` | string | Level 4 category code, e.g. `"08.01.02.01"` — required for food samples; see `foodcategorylevel4` reference data |
+| `detailCategoryCode` | string | Category code. Food: level 4 code, e.g. `"08.01.02.01"` — required for food samples; see `foodcategorylevel4` reference data. Animal feed: sub-category code, e.g. `"50.02"`; see `feedcategorylevel2` reference data |
 | `detailBrandName` | string | Brand name |
 | `detailNatureOfProductCode` | string | Nature of product code — see `foodnatureofproduct` reference data |
 | `detailSampleTakenFromCode` | string | Where the sample was taken from — see `foodtakenfrom` reference data |

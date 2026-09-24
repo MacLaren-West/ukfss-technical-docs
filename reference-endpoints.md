@@ -128,6 +128,7 @@ GET /api/SampleEntry/GetReferenceData?dataType={datatype}
 - `foodHygieneRiskCategory`
 - `foodStandardsRiskCategory`
 - `foodCategoryLevel4`
+- `feedCategoryLevel2` — feed category and sub-category; the sub-category code is the sample's `detailCategoryCode` for animal feed. See the [LA API reference data](la-api/reference-endpoints.md#feedcategorylevel2--feed-category-hierarchy) for the response shape.
 
 ---
 

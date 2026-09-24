@@ -429,6 +429,7 @@ GET /api/SampleEntry/GetReferenceData?dataType={datatype}
 - foodhygieneriskcategory
 - foodstandardsriskcategory
 - foodCategoryLevel4
+- feedCategoryLevel2
 
 ---
 

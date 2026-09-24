@@ -31,7 +31,7 @@ Most reference lists return an array of objects with two fields:
 
 The `value` field is the code to use in your sample payload. The `label` is the human-readable display name. Always use `value` when submitting samples — do not use `label`.
 
-`foodCategoryLevel4` and `feedAnimalSpecies` have different shapes — see below.
+`foodCategoryLevel4`, `feedCategoryLevel2` and `feedAnimalSpecies` have different shapes — see below.
 
 ---
 
@@ -67,6 +67,7 @@ The `value` field is the code to use in your sample payload. The `label` is the 
 | `feedReasonTaken` | Reason codes (`reasonCode`) for animal feed samples |
 | `feedReasonType` | Reason type codes (`reasonTypeCode`) for animal feed samples |
 | `feedSurveyBody` | Survey body codes for feed surveillance samples |
+| `feedCategoryLevel2` | Feed category hierarchy — category and sub-category (see below) |
 | `feedAnimalSpecies` | Animal species codes (`feedAnimalSpeciesCode`) — see below |
 
 ---
@@ -114,6 +115,31 @@ curl --location 'https://test.ukfss.org.uk/api/v1/sample-entry/get-reference-dat
 ```
 
 Use `codelevel4` as the value for `detailCategoryCode` in your sample payload. For further background on the category structure, see the [UKFSS Category Tree guidance](https://docs.ukfss.org.uk/category-tree-guidance/html/index.html).
+
+---
+
+### `feedCategoryLevel2` — Feed Category Hierarchy
+
+Animal feed uses a two-level category tree: a category (e.g. Compound feeds) and a sub-category beneath it (e.g. Complementary). Each entry is one sub-category and includes its parent category, so the full tree can be built from this one list.
+
+```bash
+curl --location 'https://test.ukfss.org.uk/api/v1/sample-entry/get-reference-data?dataType=feedCategoryLevel2' \
+--header 'api-key: {api-key}'
+```
+
+**Example item:**
+
+```json
+{
+  "CategoryLevel1Code": "50",
+  "CategoryLevel1Text": "Compound feeds",
+  "CategoryLevel2Code": "50.02",
+  "CategoryLevel2Text": "Complementary",
+  "CategoryText": "Compound feeds: Complementary"
+}
+```
+
+Use `CategoryLevel2Code` as the value for `detailCategoryCode` in an animal feed sample payload. The category is not sent separately — it is determined by the sub-category. Samples returned by the API carry the sub-category code only, so look it up in this list to get the category and display names. The response also contains internal identifier fields, which can be ignored.
 
 ---
 
