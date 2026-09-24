@@ -132,7 +132,7 @@ POST /api/lab/submit-sample-lab-results
       "fsId": "11234",
       "fsReference": "FS-24-000123",
       "authorityCode": "AB12",
-      "authorityOfficeCode": "AB12-01",
+      "authorityOfficeCode": "AB12HQ",
       "authorityReference": "LA-7788",
       "laboratoryComments": "No anomalies in intake.",
       "laboratoryReference": "LIMS-998877",

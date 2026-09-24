@@ -28,7 +28,7 @@ The body is a single JSON object. Fields not listed in the required tables below
 | `fsAnalysisTypeCode` | string | `"C"` (chemical) or `"M"` (microbiology) |
 | `authorityCode` | string | Your local authority code — must match the LA associated with your API key. The request is rejected with `403` if this does not match |
 | `authorityDateTimeSampleTaken` | string | ISO 8601 datetime, e.g. `"2025-10-15T10:30:00"` or `"2025-10-15T10:30"` |
-| `authorityOfficeCode` | string | The sampling office code |
+| `authorityOfficeCode` | string | The sampling office's full code: your authority code followed by the office's own code, e.g. `806HQ` for office `HQ` in authority `806`. Must be an office set up for your authority in UKFSS |
 | `authoritySamplingOfficerCode` | string | Sampling officer code. GUID values are supported |
 | `laboratoryCode` | string | Code of the assigned laboratory — must be a valid lab code |
 | `laboratoryRoutineAnalysisRequired` | boolean | `true` or `false` |
@@ -85,7 +85,7 @@ curl --location --request POST 'https://test.ukfss.org.uk/api/v1/sample-entry/sa
   "fsStatusCode": null,
   "fsAdditionalInformation": null,
   "authorityCode": "806",
-  "authorityOfficeCode": "806-01",
+  "authorityOfficeCode": "806HQ",
   "authorityReference": "LA-2025-001234",
   "authorityDateTimeSampleTaken": "2025-10-15T10:30:00",
   "authoritySamplingOfficerCode": "SO123",
@@ -323,7 +323,7 @@ An array of candidate samples. Only samples currently in `VALIDATED` status are 
     "officerCode": "SO123",
     "officerName": "J. Smith",
     "officerEmail": "j.smith@council.gov.uk",
-    "officeCode": "806-01",
+    "officeCode": "806HQ",
     "officeName": "Headquarters",
     "laboratoryCode": "LAB001",
     "laboratoryName": "Example Laboratory",
