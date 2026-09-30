@@ -31,7 +31,7 @@ Most reference lists return an array of objects with two fields:
 
 The `value` field is the code to use in your sample payload. The `label` is the human-readable display name. Always use `value` when submitting samples — do not use `label`.
 
-`foodCategoryLevel4`, `feedCategoryLevel2` and `feedAnimalSpecies` have different shapes — see below.
+`foodCategoryLevel4`, `feedCategoryLevel2` and `feedAnimalSpecies` have different shapes, and the per-authority lists add an `authorityCode` field — see below.
 
 ---
 
@@ -70,6 +70,19 @@ The `value` field is the code to use in your sample payload. The `label` is the 
 | `feedCategoryLevel2` | Feed category hierarchy — category and sub-category (see below) |
 | `feedAnimalSpecies` | Animal species codes (`feedAnimalSpeciesCode`) — see below |
 
+#### Your Authority
+
+These lists are not the same for every caller. They cover only the authorities your API key can submit samples for.
+
+| `dataType` | Description |
+| :--------- | :---------- |
+| `authority` | Authority codes (`authorityCode`) your API key can submit samples for |
+| `authorityOffice` | Office codes (`authorityOfficeCode`) set up for each of your authorities. A sample whose office is not in this list is rejected |
+| `laboratory` | Laboratory codes (`laboratoryCode`): the laboratories your authority normally uses, or every active laboratory if none are set up |
+| `authoritySamplingOfficer` | Sampling officers recorded for your authority in UKFSS — see below |
+
+See [Per-Authority Lists](#per-authority-lists) for their shape.
+
 ---
 
 ### Example Requests
@@ -85,6 +98,10 @@ curl --location 'https://test.ukfss.org.uk/api/v1/sample-entry/get-reference-dat
 
 # Animal feed reason types
 curl --location 'https://test.ukfss.org.uk/api/v1/sample-entry/get-reference-data?dataType=feedReasonType' \
+--header 'api-key: {api-key}'
+
+# Office codes for your authority
+curl --location 'https://test.ukfss.org.uk/api/v1/sample-entry/get-reference-data?dataType=authorityOffice' \
 --header 'api-key: {api-key}'
 ```
 
@@ -155,6 +172,71 @@ The animal species list returns objects with a `value` code and a `label` taken 
 ```
 
 Use `value` for `feedAnimalSpeciesCode` in your payload.
+
+---
+
+### Per-Authority Lists
+
+`authority`, `authorityOffice`, `laboratory` and `authoritySamplingOfficer` return rows only for the authorities your API key can submit samples for. That is the same check a sample submission makes, so every code returned can be used in a payload.
+
+Every row except those from `authority` carries the `authorityCode` it belongs to. A key that covers several authorities gets all of them in one call. To get one authority only, add `authorityCode`:
+
+```bash
+curl --location 'https://test.ukfss.org.uk/api/v1/sample-entry/get-reference-data?dataType=authorityOffice&authorityCode=999' \
+--header 'api-key: {api-key}'
+```
+
+An `authorityCode` your key cannot submit samples for returns `403`.
+
+**`authority`:**
+
+```json
+[
+  { "value": "999", "label": "Test Local Authority" }
+]
+```
+
+**`authorityOffice`:**
+
+```json
+[
+  { "value": "999HQ", "label": "Headquarters", "authorityCode": "999" }
+]
+```
+
+**`laboratory`:**
+
+```json
+[
+  { "value": "PATST", "label": "Test Laboratory", "authorityCode": "999" }
+]
+```
+
+#### `authoritySamplingOfficer` — Sampling Officers
+
+```json
+[
+  {
+    "value": "999-0001",
+    "label": "Jane Example",
+    "email": "jane.example@example.gov.uk",
+    "authorityOfficeCode": "999HQ",
+    "authorityCode": "999",
+    "food": true,
+    "feed": false
+  }
+]
+```
+
+| Field | Use |
+| :---- | :-- |
+| `value` | `authoritySamplingOfficerCode` |
+| `label` | `authoritySamplingOfficerName` |
+| `email` | `authoritySamplingOfficerEmail` |
+| `authorityOfficeCode` | The officer's home office, or `null` if none is recorded |
+| `food`, `feed` | Whether the officer takes food samples, animal feed samples, or both |
+
+This list is for guidance only. `authoritySamplingOfficerCode` is not checked against it, so you can keep sending the officer identifiers your own system uses. Using a code from this list means the officer is recognised when a sample is opened in the UKFSS Portal.
 
 ---
 

@@ -22,11 +22,11 @@ All fields accepted by `POST /api/SampleEntry/Save`. Fields not marked required 
 
 | Field | Type | Notes |
 | :---- | :--- | :---- |
-| `authorityCode` | string | **Required.** Your local authority code — must match an authority your API key is authorised for. Returns `403` if missing or mismatched |
-| `authorityOfficeCode` | string | **Required.** The sampling office's full code: your authority code followed by the office's own code, e.g. `999HQ` for office `HQ` in authority `999`. Must be an office set up for your authority in UKFSS, otherwise the sample is rejected with `Invalid authorityOfficeCode` |
+| `authorityCode` | string | **Required.** Your local authority code — must match an authority your API key is authorised for. Returns `403` if missing or mismatched. List them with [`dataType=authority`](reference-endpoints.md#per-authority-lists) |
+| `authorityOfficeCode` | string | **Required.** The sampling office's full code: your authority code followed by the office's own code, e.g. `999HQ` for office `HQ` in authority `999`. Must be an office set up for your authority in UKFSS, otherwise the sample is rejected with `Invalid authorityOfficeCode`. List them with [`dataType=authorityOffice`](reference-endpoints.md#per-authority-lists) |
 | `authorityReference` | string | Your system's own sample reference |
 | `authorityDateTimeSampleTaken` | string | **Required.** ISO 8601 datetime, e.g. `"2025-10-15T10:30:00"`. Seconds are optional — `"2025-10-15T10:30"` is also accepted. Use `"T03:00:00"` if time is unknown |
-| `authoritySamplingOfficerCode` | string | **Required.** Sampling officer code. GUID-length values are supported |
+| `authoritySamplingOfficerCode` | string | **Required.** Sampling officer code. GUID-length values are supported. Officers recorded in UKFSS are listed by [`dataType=authoritySamplingOfficer`](reference-endpoints.md#authoritysamplingofficer--sampling-officers), but any code is accepted |
 | `authoritySamplingOfficerName` | string | Sampling officer full name |
 | `authoritySamplingOfficerEmail` | string | Sampling officer email address |
 | `authorityComments` | string | Free-text comments from the sampling officer |
@@ -37,7 +37,7 @@ All fields accepted by `POST /api/SampleEntry/Save`. Fields not marked required 
 
 | Field | Type | Notes |
 | :---- | :--- | :---- |
-| `laboratoryCode` | string | **Required.** Code of the assigned laboratory |
+| `laboratoryCode` | string | **Required.** Code of the assigned laboratory. List them with [`dataType=laboratory`](reference-endpoints.md#per-authority-lists) |
 | `laboratoryRoutineAnalysisRequired` | boolean | **Required.** Whether routine analysis is requested — `true` or `false`, not a string |
 | `laboratoryAnalysisRequiredDetail` | string | **Required.** Free-text description of analysis required |
 

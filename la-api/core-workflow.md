@@ -28,9 +28,9 @@ The body is a single JSON object. Fields not listed in the required tables below
 | `fsAnalysisTypeCode` | string | `"C"` (chemical) or `"M"` (microbiology) |
 | `authorityCode` | string | Your local authority code — must match the LA associated with your API key. The request is rejected with `403` if this does not match |
 | `authorityDateTimeSampleTaken` | string | ISO 8601 datetime, e.g. `"2025-10-15T10:30:00"` or `"2025-10-15T10:30"` |
-| `authorityOfficeCode` | string | The sampling office's full code: your authority code followed by the office's own code, e.g. `999HQ` for office `HQ` in authority `999`. Must be an office set up for your authority in UKFSS |
+| `authorityOfficeCode` | string | The sampling office's full code: your authority code followed by the office's own code, e.g. `999HQ` for office `HQ` in authority `999`. Must be an office set up for your authority in UKFSS — list them with [`dataType=authorityOffice`](reference-endpoints.md#per-authority-lists) |
 | `authoritySamplingOfficerCode` | string | Sampling officer code. GUID values are supported |
-| `laboratoryCode` | string | Code of the assigned laboratory — must be a valid lab code |
+| `laboratoryCode` | string | Code of the assigned laboratory — must be a valid lab code. List them with [`dataType=laboratory`](reference-endpoints.md#per-authority-lists) |
 | `laboratoryRoutineAnalysisRequired` | boolean | `true` or `false` |
 | `laboratoryAnalysisRequiredDetail` | string | Free-text description of analysis required |
 | `premisesBusinessId` | string | Premises business identifier |
