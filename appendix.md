@@ -26,6 +26,8 @@
 | FailCode                   | laboratorySampleFailureCode  | Yes      |
 | RecordedDate               | laboratoryAnalysisReportDate | Yes      |
 
+`laboratorySampleFailureCode` is required: send `"NONE"` when the sample is satisfactory.
+
 ### Result Mapping
 
 | Legacy Name | API Field | Required |
@@ -49,6 +51,8 @@
 | Legacy Name | API Field | Required |
 |------------|----------|----------|
 | Code | outcomeCode | Yes |
+
+The `outcomes` array itself is optional. **Required** above applies to each entry that is sent.
 
 ---
 

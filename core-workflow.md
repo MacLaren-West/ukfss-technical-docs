@@ -123,6 +123,17 @@ POST /api/lab/submit-sample-lab-results
 - Results can be submitted regardless of the sample's accept/reject status
 - Submitting results changes the sample's status to **analysis complete** and removes it from the pending queue
 
+### Outcome Fields
+
+| Field | Level | Required | Notes |
+| :---- | :---- | :------- | :---- |
+| `laboratoryIsSatisfactory` | sample | Yes | The laboratory's overall conclusion for the sample: `true` or `false` |
+| `laboratorySampleFailureCode` | sample | Yes | Send `"NONE"` when the sample is satisfactory |
+| `results[].outcomeCode` | result | Yes | The outcome for each result, e.g. `B0800` (see below) |
+| `outcomes[]` | sample | No | Optional list of additional sample-level outcome codes; can be omitted. If sent, each entry needs an `outcomeCode` |
+
+An outcome code is made of three parts: a one-letter category, a two-digit type and a two-digit result. For example `B0800` is Constituent (`B`), Fat (`08`), Satisfactory (`00`). Each determination from `get-determinations` carries its default outcome category, type and result, so a result can default to the determination's satisfactory outcome and only be changed when the result is not satisfactory. Valid codes are available from `get-outcomes`. See the [Enhanced Outcome Guidance](https://docs.ukfss.org.uk/enhanced-outcome-guidance-v3/html/index.html) for the full code structure.
+
 ### Example Payload
 
 ```json
@@ -145,18 +156,18 @@ POST /api/lab/submit-sample-lab-results
           "laboratoryResultId": "R-1",
           "resultTimestamp": "2025-10-21T11:30:00Z",
           "determinationCode": "DET001",
-          "testSubstance": "NaCl",
-          "testUnits": "mg/kg",
+          "testSubstance": "Fat",
+          "testUnits": "g/100g",
           "resultTypeCode": "NUMERIC",
-          "formattedOutput": "12.3 mg/kg",
+          "formattedOutput": "12.3 g/100g",
           "numericResult": 12.3,
           "numericResultQualifier": "=",
-          "outcomeCode": "10100"
+          "outcomeCode": "B0800"
         }
       ],
       "outcomes": [
         {
-          "outcomeCode": "10200"
+          "outcomeCode": "B0800"
         }
       ]
     }
