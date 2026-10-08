@@ -6,11 +6,13 @@
 
 ## Data Model & Field Mappings
 
+When results are submitted, `fsReference` must be present and match a sample. A missing value for any other **Required** or **Conditional** sample or result field is reported as a warning and the sample is still accepted, unless your laboratory uses strict validation. See [Submission Rules](core-workflow.md#submission-rules).
+
 ### Sample Mapping
 
 | Legacy Name                | API Field                    | Required |
 | -------------------------- | ---------------------------- | -------- |
-| *(New Field)*              | fsId                         | Yes      |
+| *(New Field)*              | fsId                         | No       |
 | SampleNumber               | fsReference                  | Yes      |
 | LocalAuthorityCode         | authorityCode                | Yes      |
 | LocalAuthorityOfficeCode   | authorityOfficeCode          | Yes      |
