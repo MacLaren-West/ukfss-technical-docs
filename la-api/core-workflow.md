@@ -50,8 +50,9 @@ The body is a single JSON object. Fields not listed in the required tables below
 
 | Field | Type | Required When |
 | :---- | :--- | :------------ |
-| `detailDescription` | string | `fsRecordTypeCode = "FOOD"` |
-| `detailCategoryCode` | string | `fsRecordTypeCode = "FOOD"` |
+| `detailDescription` | string | `fsRecordTypeCode = "FOOD"` or `"ANIMAL FEED"` |
+| `detailCategoryCode` | string | `fsRecordTypeCode = "FOOD"` or `"ANIMAL FEED"` |
+| `feedAnimalSpeciesCode` | string | `fsRecordTypeCode = "ANIMAL FEED"` |
 | `surveyReference` | string | `surveyBodyCode` is provided |
 | `packagingOtherMaterialDetail` | string | `packagingMaterialCode = "O"` |
 | `codeOfPracticeNotCompliantDetail` | string | `codeOfPracticeCompliant = false` |
@@ -166,13 +167,15 @@ The `success` field in the response body indicates whether the sample is valid:
 
 #### `success: true` — valid and saved
 
+The sample is saved with status `VALIDATED`, ready to be sent to the laboratory.
+
 ```json
 {
   "success": true,
   "data": {
     "fsId": 100001,
     "fsReference": "99900000001",
-    "fsStatusCode": "ENTERED",
+    "fsStatusCode": "VALIDATED",
     ...
     "messages": [
       { "message": "Validation Complete" }

@@ -76,8 +76,8 @@ All fields accepted by `POST /api/SampleEntry/Save`. Fields not marked required 
 
 | Field | Type | Notes |
 | :---- | :--- | :---- |
-| `detailDescription` | string | Description of the sample — required for food samples |
-| `detailCategoryCode` | string | Category code. Food: level 4 code, e.g. `"08.01.02.01"` — required for food samples; see `foodcategorylevel4` reference data. Animal feed: sub-category code, e.g. `"50.02"`; see `feedcategorylevel2` reference data |
+| `detailDescription` | string | Description of the sample — required for food and animal feed samples |
+| `detailCategoryCode` | string | Category code. Food: level 4 code, e.g. `"08.01.02.01"` — required for food samples; see `foodcategorylevel4` reference data. Animal feed: sub-category code, e.g. `"50.02"`, required for animal feed samples; see `feedcategorylevel2` reference data |
 | `detailBrandName` | string | Brand name |
 | `detailNatureOfProductCode` | string | Nature of product code — see `foodnatureofproduct` reference data |
 | `detailSampleTakenFromCode` | string | Where the sample was taken from — see `foodtakenfrom` reference data |
@@ -92,7 +92,7 @@ All fields accepted by `POST /api/SampleEntry/Save`. Fields not marked required 
 | :---- | :--- | :---- |
 | `feedRegistrationNumber` | string | Feed registration number |
 | `feedDateOfManufacture` | string | ISO 8601 date (e.g. `"2025-08-01"`) |
-| `feedAnimalSpeciesCode` | string | Animal species code — see `feedanimalspecies` reference data |
+| `feedAnimalSpeciesCode` | string | Animal species code — required for animal feed samples; see `feedanimalspecies` reference data |
 | `feedLabelRegistrationNumber` | string | Label registration number |
 | `feedLabelBusinessTypeCode` | string | Label business type code — see `feedlabelbusinesstype` reference data |
 | `feedLabelBusinessAddress` | string | Label business address |
