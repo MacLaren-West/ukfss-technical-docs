@@ -22,3 +22,4 @@ Each sample is uniquely identified by an `fsId` once created. The `authorityRefe
 | [Core Workflow](core-workflow.md) | Submit a sample and retrieve submitted records |
 | [Reference Endpoints](reference-endpoints.md) | Look up valid codes and reference data |
 | [Appendix](appendix.md) | Field reference, legacy mappings, and constraints |
+| [Test Pack](test-pack.md) | Ready-made Postman collection and guide for testing your integration on the Test environment |

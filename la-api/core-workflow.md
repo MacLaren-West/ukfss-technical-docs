@@ -65,7 +65,7 @@ The body is a single JSON object. Fields not listed in the required tables below
 
 > **`fsAnalysisTypeCode`:** `"C"` = chemical analysis, `"M"` = microbiological analysis. Use the short codes only — the long-form strings `"chemical"` and `"microbiology"` are not accepted.
 
-> **`authorityDateTimeSampleTaken`:** ISO 8601 format. Seconds are optional — both `"2025-10-15T10:30"` and `"2025-10-15T10:30:00"` are accepted.
+> **`authorityDateTimeSampleTaken`:** ISO 8601 format. Seconds are optional — both `"2025-10-15T10:30"` and `"2025-10-15T10:30:00"` are accepted. The date must be within the last 30 days, or up to 7 days ahead.
 
 > **`conditionTemperatureWhenTaken`:** Numeric field (decimal °C). Do not send string values such as `"Frozen"` — use `null` if the temperature is not measured. When `conditionCode = "F"` (frozen), the value must be below 0.
 
@@ -109,7 +109,7 @@ curl --location --request POST 'https://test.ukfss.org.uk/api/v1/sample-entry/sa
   "premisesFoodStandardsRiskRating": "A",
   "premisesTypeCode": "E",
   "reasonCode": "E",
-  "reasonTypeCode": "R",
+  "reasonTypeCode": "F",
   "reasonFollowupSampleReference": null,
   "reasonFoodborneIllnessDetail": null,
   "surveyBodyCode": null,

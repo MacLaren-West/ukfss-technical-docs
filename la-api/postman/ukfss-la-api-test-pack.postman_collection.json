@@ -1,0 +1,1390 @@
+{
+  "info": {
+    "name": "UKFSS LA API test pack",
+    "description": "Tests the two ways a sample reaches the laboratory from your system:\n\nA. Complete samples: saved through the API and sent to the lab through the API.\nB. Incomplete samples: saved through the API as drafts, then completed and sent by an officer in the UKFSS Portal.\n\nFolder C covers correcting a draft through the API instead, and a few edge cases. Folder D checks the samples once test results have been returned.\n\nSet apiKey in the collection variables, then run the folders in order. Requests in a folder depend on the ones before them. Samples are sent to PATST, the UKFSS Test Laboratory. Nothing sent on the Test environment reaches a real laboratory.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Sample date: one hour ago, local time, no seconds. UKFSS accepts dates from 30 days ago to 7 days ahead.",
+          "const pad = n => String(n).padStart(2, \"0\");",
+          "const t = new Date(Date.now() - 60 * 60 * 1000);",
+          "pm.collectionVariables.set(\"sampleTaken\", `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}T${pad(t.getHours())}:${pad(t.getMinutes())}`);",
+          "// Durability date three weeks ahead.",
+          "const d = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000);",
+          "pm.collectionVariables.set(\"durabilityDay\", d.getDate());",
+          "pm.collectionVariables.set(\"durabilityMonth\", d.getMonth() + 1);",
+          "pm.collectionVariables.set(\"durabilityYear\", d.getFullYear());"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://test.ukfss.org.uk",
+      "description": "Test environment. Never point this collection at Live."
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "description": "Your Test API key."
+    },
+    {
+      "key": "authorityCode",
+      "value": "999",
+      "description": "Your local authority code."
+    },
+    {
+      "key": "officeCode",
+      "value": "999HQ",
+      "description": "Full office code: authority code + office."
+    },
+    {
+      "key": "officerCode",
+      "value": "SO123",
+      "description": "Your own identifier for the sampling officer."
+    },
+    {
+      "key": "officerName",
+      "value": "J. Smith",
+      "description": ""
+    },
+    {
+      "key": "officerEmail",
+      "value": "j.smith@council.gov.uk",
+      "description": ""
+    },
+    {
+      "key": "labCode",
+      "value": "PATST",
+      "description": "UKFSS Test Laboratory, recommended for testing."
+    },
+    {
+      "key": "authorityReference",
+      "value": ""
+    },
+    {
+      "key": "sampleTaken",
+      "value": ""
+    },
+    {
+      "key": "durabilityDay",
+      "value": ""
+    },
+    {
+      "key": "durabilityMonth",
+      "value": ""
+    },
+    {
+      "key": "durabilityYear",
+      "value": ""
+    },
+    {
+      "key": "completeFsId",
+      "value": ""
+    },
+    {
+      "key": "completeRef",
+      "value": ""
+    },
+    {
+      "key": "draftFsId",
+      "value": ""
+    },
+    {
+      "key": "draftRef",
+      "value": ""
+    },
+    {
+      "key": "fixedFsId",
+      "value": ""
+    },
+    {
+      "key": "fixedRef",
+      "value": ""
+    },
+    {
+      "key": "batchId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Setup checks",
+      "description": "Confirms the key works and the codes in the collection variables are valid for your authority. Run these first.",
+      "item": [
+        {
+          "name": "0.1 Key works and covers our authority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const codes = pm.response.json().map(a => a.value);",
+                  "pm.test(\"Key covers {{authorityCode}}\", () => pm.expect(codes).to.include(pm.collectionVariables.get(\"authorityCode\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-reference-data?dataType=authority",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-reference-data"
+              ],
+              "query": [
+                {
+                  "key": "dataType",
+                  "value": "authority"
+                }
+              ]
+            },
+            "description": "Lists the authorities this key can submit for. Expect your authority code in the list."
+          }
+        },
+        {
+          "name": "0.2 Office code is set up",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const codes = pm.response.json().map(o => o.value);",
+                  "pm.test(\"Office {{officeCode}} exists\", () => pm.expect(codes).to.include(pm.collectionVariables.get(\"officeCode\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-reference-data?dataType=authorityOffice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-reference-data"
+              ],
+              "query": [
+                {
+                  "key": "dataType",
+                  "value": "authorityOffice"
+                }
+              ]
+            },
+            "description": "Lists your authority's offices. authorityOfficeCode must be one of these, in full (e.g. 999HQ)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "A. Complete sample, sent to the lab through the API",
+      "description": "A sample with every required field passes validation (VALIDATED) and can be sent to the lab straight from your system, with no Portal step.",
+      "item": [
+        {
+          "name": "A1 Save a complete sample",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fresh LA reference each run so samples are easy to find in the Portal.",
+                  "pm.collectionVariables.set(\"authorityReference\", \"APITEST-\" + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"success is true\", () => pm.expect(j.success, JSON.stringify(j.errors)).to.eql(true));",
+                  "pm.test(\"Status is VALIDATED\", () => pm.expect(j.data.fsStatusCode).to.eql(\"VALIDATED\"));",
+                  "pm.test(\"fsId and fsReference returned\", () => { pm.expect(j.data.fsId).to.be.a(\"number\"); pm.expect(j.data.fsReference).to.be.a(\"string\"); });",
+                  "pm.collectionVariables.set(\"completeFsId\", j.data.fsId);",
+                  "pm.collectionVariables.set(\"completeRef\", j.data.fsReference);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "save"
+              ]
+            },
+            "description": "Expect success true and status VALIDATED. Stores fsId and fsReference for the next steps.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fsRecordTypeCode\": \"FOOD\",\n  \"fsAnalysisTypeCode\": \"C\",\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"authorityOfficeCode\": \"{{officeCode}}\",\n  \"authorityReference\": \"{{authorityReference}}\",\n  \"authorityDateTimeSampleTaken\": \"{{sampleTaken}}\",\n  \"authoritySamplingOfficerCode\": \"{{officerCode}}\",\n  \"authoritySamplingOfficerName\": \"{{officerName}}\",\n  \"authoritySamplingOfficerEmail\": \"{{officerEmail}}\",\n  \"authorityComments\": \"UKFSS LA API test pack - test sample, please ignore\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"laboratoryRoutineAnalysisRequired\": false,\n  \"laboratoryAnalysisRequiredDetail\": \"Formaldehyde\",\n  \"premisesBusinessId\": \"BUS-12345\",\n  \"premisesTradingName\": \"Fresh Foods Ltd\",\n  \"premisesFoodHygieneRiskRating\": \"U\",\n  \"premisesFoodStandardsRiskRating\": \"U\",\n  \"premisesTypeCode\": \"E\",\n  \"reasonCode\": \"E\",\n  \"reasonTypeCode\": \"F\",\n  \"detailDescription\": \"API test pack sample\",\n  \"detailCategoryCode\": \"13.01.01.01\",\n  \"detailBrandName\": \"Test\",\n  \"detailNatureOfProductCode\": \"P\",\n  \"detailManufacturer\": \"N/A\",\n  \"detailDistributor\": \"N/A\",\n  \"detailImporter\": \"N/A\",\n  \"detailCountryOfOrigin\": \"China\",\n  \"packagingProvidedCode\": \"C\",\n  \"packagingMaterialCode\": \"O\",\n  \"packagingOtherMaterialDetail\": \"Not specified\",\n  \"packagingBatchNumber\": \"TEST-BATCH-001\",\n  \"durabilityCode\": \"N\",\n  \"durabilityDay\": {{durabilityDay}},\n  \"durabilityMonth\": {{durabilityMonth}},\n  \"durabilityYear\": {{durabilityYear}},\n  \"conditionCode\": \"O\",\n  \"conditionTemperatureWhenTaken\": null,\n  \"codeOfPracticeCompliant\": false,\n  \"codeOfPracticeNotCompliantDetail\": \"Port Health legislative requirements used\",\n  \"codeOfPracticeTransportCompliant\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "A2 Read it back: VALIDATED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); const r = Array.isArray(j) ? j[0] : j;",
+                  "pm.test(\"Status is VALIDATED\", () => pm.expect(r.fsStatusCode).to.eql(\"VALIDATED\"));",
+                  "pm.test(\"Same record\", () => pm.expect(r.fsReference).to.eql(pm.collectionVariables.get(\"completeRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-single-record?fsId={{completeFsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-single-record"
+              ],
+              "query": [
+                {
+                  "key": "fsId",
+                  "value": "{{completeFsId}}"
+                }
+              ]
+            },
+            "description": "The saved sample is ready to send."
+          }
+        },
+        {
+          "name": "A3 It is listed as ready to send",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const refs = pm.response.json().map(s => s.reference);",
+                  "pm.test(\"Sample listed as ready to send\", () => pm.expect(refs).to.include(pm.collectionVariables.get(\"completeRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-export/candidate-samples?authorityCode={{authorityCode}}&personality=FOOD",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-export",
+                "candidate-samples"
+              ],
+              "query": [
+                {
+                  "key": "authorityCode",
+                  "value": "{{authorityCode}}"
+                },
+                {
+                  "key": "personality",
+                  "value": "FOOD"
+                }
+              ]
+            },
+            "description": "candidate-samples lists every VALIDATED sample awaiting export."
+          }
+        },
+        {
+          "name": "A4 Send it to the lab",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"One sample exported\", () => pm.expect(j.sampleCount).to.eql(1));",
+                  "pm.test(\"Our sample is in the batch\", () => pm.expect(j.sampleCodes).to.include(pm.collectionVariables.get(\"completeRef\")));",
+                  "pm.collectionVariables.set(\"batchId\", j.batchId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-export/submit-to-lab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-export",
+                "submit-to-lab"
+              ]
+            },
+            "description": "Exports the sample to the lab in the collection variables. laboratoryCode must match the one on the sample.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"personality\": \"FOOD\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"sampleReferences\": [\n    \"{{completeRef}}\"\n  ],\n  \"comment\": \"UKFSS LA API test pack - test sample\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "A5 Read it back: EXPORTED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); const r = Array.isArray(j) ? j[0] : j;",
+                  "pm.test(\"Status is EXPORTED\", () => pm.expect(r.fsStatusCode).to.eql(\"EXPORTED\"));",
+                  "pm.test(\"Same record\", () => pm.expect(r.fsReference).to.eql(pm.collectionVariables.get(\"completeRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-single-record?fsId={{completeFsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-single-record"
+              ],
+              "query": [
+                {
+                  "key": "fsId",
+                  "value": "{{completeFsId}}"
+                }
+              ]
+            },
+            "description": "The sample now belongs to the lab."
+          }
+        },
+        {
+          "name": "A6 Sending it again is refused (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409 - nothing exported\", () => pm.response.to.have.status(409));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Our sample is listed as the failure\", () => pm.expect(j.failures.map(f => f.sampleReference)).to.include(pm.collectionVariables.get(\"completeRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-export/submit-to-lab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-export",
+                "submit-to-lab"
+              ]
+            },
+            "description": "A sample can only be sent once. The whole batch is refused and nothing is exported.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"personality\": \"FOOD\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"sampleReferences\": [\n    \"{{completeRef}}\"\n  ],\n  \"comment\": \"UKFSS LA API test pack - test sample\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "B. Incomplete sample, corrected and sent in the Portal",
+      "description": "A sample missing required fields is still saved, as a draft (ENTERED), with the problems listed. It can't be sent through the API. An officer finds it in the Portal under Sample Browser > All drafts, completes it, saves it and sends it with Export to lab. B5 and B6 are run after those Portal steps, to show your system can see the outcome.",
+      "item": [
+        {
+          "name": "B1 Save an incomplete sample",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fresh LA reference each run so samples are easy to find in the Portal.",
+                  "pm.collectionVariables.set(\"authorityReference\", \"APITEST-\" + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 (the request was received)\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"success is false\", () => pm.expect(j.success).to.eql(false));",
+                  "pm.test(\"Sample was still saved, as a draft (ENTERED)\", () => pm.expect(j.data.fsStatusCode).to.eql(\"ENTERED\"));",
+                  "const fields = (j.errors || []).map(e => e.field);",
+                  "[\"premisesTypeCode\", \"packagingBatchNumber\", \"detailCategoryCode\"].forEach(f => pm.test(\"Error reported for \" + f, () => pm.expect(fields).to.include(f)));",
+                  "pm.collectionVariables.set(\"draftFsId\", j.data.fsId);",
+                  "pm.collectionVariables.set(\"draftRef\", j.data.fsReference);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "save"
+              ]
+            },
+            "description": "Premises type, batch number and food category are left empty. Expect success false, status ENTERED and an error for each.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fsRecordTypeCode\": \"FOOD\",\n  \"fsAnalysisTypeCode\": \"C\",\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"authorityOfficeCode\": \"{{officeCode}}\",\n  \"authorityReference\": \"{{authorityReference}}\",\n  \"authorityDateTimeSampleTaken\": \"{{sampleTaken}}\",\n  \"authoritySamplingOfficerCode\": \"{{officerCode}}\",\n  \"authoritySamplingOfficerName\": \"{{officerName}}\",\n  \"authoritySamplingOfficerEmail\": \"{{officerEmail}}\",\n  \"authorityComments\": \"UKFSS LA API test pack - test sample, please ignore\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"laboratoryRoutineAnalysisRequired\": false,\n  \"laboratoryAnalysisRequiredDetail\": \"Formaldehyde\",\n  \"premisesBusinessId\": \"BUS-12345\",\n  \"premisesTradingName\": \"Fresh Foods Ltd\",\n  \"premisesFoodHygieneRiskRating\": \"U\",\n  \"premisesFoodStandardsRiskRating\": \"U\",\n  \"premisesTypeCode\": null,\n  \"reasonCode\": \"E\",\n  \"reasonTypeCode\": \"F\",\n  \"detailDescription\": \"API test pack sample - incomplete\",\n  \"detailCategoryCode\": null,\n  \"detailBrandName\": \"Test\",\n  \"detailNatureOfProductCode\": \"P\",\n  \"detailManufacturer\": \"N/A\",\n  \"detailDistributor\": \"N/A\",\n  \"detailImporter\": \"N/A\",\n  \"detailCountryOfOrigin\": \"China\",\n  \"packagingProvidedCode\": \"C\",\n  \"packagingMaterialCode\": \"O\",\n  \"packagingOtherMaterialDetail\": \"Not specified\",\n  \"packagingBatchNumber\": null,\n  \"durabilityCode\": \"N\",\n  \"durabilityDay\": {{durabilityDay}},\n  \"durabilityMonth\": {{durabilityMonth}},\n  \"durabilityYear\": {{durabilityYear}},\n  \"conditionCode\": \"O\",\n  \"conditionTemperatureWhenTaken\": null,\n  \"codeOfPracticeCompliant\": false,\n  \"codeOfPracticeNotCompliantDetail\": \"Port Health legislative requirements used\",\n  \"codeOfPracticeTransportCompliant\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "B2 Read it back: ENTERED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); const r = Array.isArray(j) ? j[0] : j;",
+                  "pm.test(\"Status is ENTERED\", () => pm.expect(r.fsStatusCode).to.eql(\"ENTERED\"));",
+                  "pm.test(\"Same record\", () => pm.expect(r.fsReference).to.eql(pm.collectionVariables.get(\"draftRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-single-record?fsId={{draftFsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-single-record"
+              ],
+              "query": [
+                {
+                  "key": "fsId",
+                  "value": "{{draftFsId}}"
+                }
+              ]
+            },
+            "description": "The draft is stored in UKFSS."
+          }
+        },
+        {
+          "name": "B3 It is not listed as ready to send",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const refs = pm.response.json().map(s => s.reference);",
+                  "pm.test(\"Sample not listed as ready to send\", () => pm.expect(refs).to.not.include(pm.collectionVariables.get(\"draftRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-export/candidate-samples?authorityCode={{authorityCode}}&personality=FOOD",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-export",
+                "candidate-samples"
+              ],
+              "query": [
+                {
+                  "key": "authorityCode",
+                  "value": "{{authorityCode}}"
+                },
+                {
+                  "key": "personality",
+                  "value": "FOOD"
+                }
+              ]
+            },
+            "description": "Drafts never appear in candidate-samples."
+          }
+        },
+        {
+          "name": "B4 Sending it through the API is refused (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409 - nothing exported\", () => pm.response.to.have.status(409));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Our sample is listed as the failure\", () => pm.expect(j.failures.map(f => f.sampleReference)).to.include(pm.collectionVariables.get(\"draftRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-export/submit-to-lab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-export",
+                "submit-to-lab"
+              ]
+            },
+            "description": "Only VALIDATED samples can be sent. Nothing is exported.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"personality\": \"FOOD\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"sampleReferences\": [\n    \"{{draftRef}}\"\n  ],\n  \"comment\": \"UKFSS LA API test pack - test sample\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "B5 After correcting it in the Portal: VALIDATED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); const r = Array.isArray(j) ? j[0] : j;",
+                  "pm.test(\"Status is VALIDATED\", () => pm.expect(r.fsStatusCode).to.eql(\"VALIDATED\"));",
+                  "pm.test(\"Same record\", () => pm.expect(r.fsReference).to.eql(pm.collectionVariables.get(\"draftRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-single-record?fsId={{draftFsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-single-record"
+              ],
+              "query": [
+                {
+                  "key": "fsId",
+                  "value": "{{draftFsId}}"
+                }
+              ]
+            },
+            "description": "MANUAL STEP FIRST: in the Portal open Sample Browser > All drafts, find the sample by its LA sample number (APITEST-...), fill in Premises type, Batch number and Food category, and save. Then run this request."
+          }
+        },
+        {
+          "name": "B6 After sending it from the Portal: EXPORTED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); const r = Array.isArray(j) ? j[0] : j;",
+                  "pm.test(\"Status is EXPORTED\", () => pm.expect(r.fsStatusCode).to.eql(\"EXPORTED\"));",
+                  "pm.test(\"Same record\", () => pm.expect(r.fsReference).to.eql(pm.collectionVariables.get(\"draftRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-single-record?fsId={{draftFsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-single-record"
+              ],
+              "query": [
+                {
+                  "key": "fsId",
+                  "value": "{{draftFsId}}"
+                }
+              ]
+            },
+            "description": "MANUAL STEP FIRST: in Sample Browser > Ready to send, tick the sample and click Export to lab. Then run this request."
+          }
+        }
+      ]
+    },
+    {
+      "name": "C. Optional: correcting through the API, and edge cases",
+      "description": "Useful if your system can correct a draft itself rather than leaving it to the Portal. Run after folder A.",
+      "item": [
+        {
+          "name": "C1 Save an incomplete sample",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fresh LA reference each run so samples are easy to find in the Portal.",
+                  "pm.collectionVariables.set(\"authorityReference\", \"APITEST-\" + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 (the request was received)\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"success is false\", () => pm.expect(j.success).to.eql(false));",
+                  "pm.test(\"Sample was still saved, as a draft (ENTERED)\", () => pm.expect(j.data.fsStatusCode).to.eql(\"ENTERED\"));",
+                  "const fields = (j.errors || []).map(e => e.field);",
+                  "[\"premisesTypeCode\", \"packagingBatchNumber\", \"detailCategoryCode\"].forEach(f => pm.test(\"Error reported for \" + f, () => pm.expect(fields).to.include(f)));",
+                  "pm.collectionVariables.set(\"fixedFsId\", j.data.fsId);",
+                  "pm.collectionVariables.set(\"fixedRef\", j.data.fsReference);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "save"
+              ]
+            },
+            "description": "Same as B1, a new draft.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fsRecordTypeCode\": \"FOOD\",\n  \"fsAnalysisTypeCode\": \"C\",\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"authorityOfficeCode\": \"{{officeCode}}\",\n  \"authorityReference\": \"{{authorityReference}}\",\n  \"authorityDateTimeSampleTaken\": \"{{sampleTaken}}\",\n  \"authoritySamplingOfficerCode\": \"{{officerCode}}\",\n  \"authoritySamplingOfficerName\": \"{{officerName}}\",\n  \"authoritySamplingOfficerEmail\": \"{{officerEmail}}\",\n  \"authorityComments\": \"UKFSS LA API test pack - test sample, please ignore\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"laboratoryRoutineAnalysisRequired\": false,\n  \"laboratoryAnalysisRequiredDetail\": \"Formaldehyde\",\n  \"premisesBusinessId\": \"BUS-12345\",\n  \"premisesTradingName\": \"Fresh Foods Ltd\",\n  \"premisesFoodHygieneRiskRating\": \"U\",\n  \"premisesFoodStandardsRiskRating\": \"U\",\n  \"premisesTypeCode\": null,\n  \"reasonCode\": \"E\",\n  \"reasonTypeCode\": \"F\",\n  \"detailDescription\": \"API test pack sample - incomplete\",\n  \"detailCategoryCode\": null,\n  \"detailBrandName\": \"Test\",\n  \"detailNatureOfProductCode\": \"P\",\n  \"detailManufacturer\": \"N/A\",\n  \"detailDistributor\": \"N/A\",\n  \"detailImporter\": \"N/A\",\n  \"detailCountryOfOrigin\": \"China\",\n  \"packagingProvidedCode\": \"C\",\n  \"packagingMaterialCode\": \"O\",\n  \"packagingOtherMaterialDetail\": \"Not specified\",\n  \"packagingBatchNumber\": null,\n  \"durabilityCode\": \"N\",\n  \"durabilityDay\": {{durabilityDay}},\n  \"durabilityMonth\": {{durabilityMonth}},\n  \"durabilityYear\": {{durabilityYear}},\n  \"conditionCode\": \"O\",\n  \"conditionTemperatureWhenTaken\": null,\n  \"codeOfPracticeCompliant\": false,\n  \"codeOfPracticeNotCompliantDetail\": \"Port Health legislative requirements used\",\n  \"codeOfPracticeTransportCompliant\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "C2 Correct it by re-sending with fsId and fsReference",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"success is true\", () => pm.expect(j.success, JSON.stringify(j.errors)).to.eql(true));",
+                  "pm.test(\"Status is VALIDATED\", () => pm.expect(j.data.fsStatusCode).to.eql(\"VALIDATED\"));",
+                  "pm.test(\"Same record updated, not a new one\", () => pm.expect(j.data.fsReference).to.eql(pm.collectionVariables.get(\"fixedRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "save"
+              ]
+            },
+            "description": "Re-sending the full sample with its fsId and fsReference updates the same record. Expect VALIDATED and the same fsReference.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fsRecordTypeCode\": \"FOOD\",\n  \"fsAnalysisTypeCode\": \"C\",\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"authorityOfficeCode\": \"{{officeCode}}\",\n  \"authorityReference\": \"{{authorityReference}}\",\n  \"authorityDateTimeSampleTaken\": \"{{sampleTaken}}\",\n  \"authoritySamplingOfficerCode\": \"{{officerCode}}\",\n  \"authoritySamplingOfficerName\": \"{{officerName}}\",\n  \"authoritySamplingOfficerEmail\": \"{{officerEmail}}\",\n  \"authorityComments\": \"UKFSS LA API test pack - test sample, please ignore\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"laboratoryRoutineAnalysisRequired\": false,\n  \"laboratoryAnalysisRequiredDetail\": \"Formaldehyde\",\n  \"premisesBusinessId\": \"BUS-12345\",\n  \"premisesTradingName\": \"Fresh Foods Ltd\",\n  \"premisesFoodHygieneRiskRating\": \"U\",\n  \"premisesFoodStandardsRiskRating\": \"U\",\n  \"premisesTypeCode\": \"E\",\n  \"reasonCode\": \"E\",\n  \"reasonTypeCode\": \"F\",\n  \"detailDescription\": \"API test pack sample\",\n  \"detailCategoryCode\": \"13.01.01.01\",\n  \"detailBrandName\": \"Test\",\n  \"detailNatureOfProductCode\": \"P\",\n  \"detailManufacturer\": \"N/A\",\n  \"detailDistributor\": \"N/A\",\n  \"detailImporter\": \"N/A\",\n  \"detailCountryOfOrigin\": \"China\",\n  \"packagingProvidedCode\": \"C\",\n  \"packagingMaterialCode\": \"O\",\n  \"packagingOtherMaterialDetail\": \"Not specified\",\n  \"packagingBatchNumber\": \"TEST-BATCH-001\",\n  \"durabilityCode\": \"N\",\n  \"durabilityDay\": {{durabilityDay}},\n  \"durabilityMonth\": {{durabilityMonth}},\n  \"durabilityYear\": {{durabilityYear}},\n  \"conditionCode\": \"O\",\n  \"conditionTemperatureWhenTaken\": null,\n  \"codeOfPracticeCompliant\": false,\n  \"codeOfPracticeNotCompliantDetail\": \"Port Health legislative requirements used\",\n  \"codeOfPracticeTransportCompliant\": false,\n  \"fsId\": {{fixedFsId}},\n  \"fsReference\": \"{{fixedRef}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "C3 Wrong laboratory is refused (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409 - nothing exported\", () => pm.response.to.have.status(409));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Our sample is listed as the failure\", () => pm.expect(j.failures.map(f => f.sampleReference)).to.include(pm.collectionVariables.get(\"fixedRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-export/submit-to-lab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-export",
+                "submit-to-lab"
+              ]
+            },
+            "description": "laboratoryCode in the request must match the lab on every sample in the batch.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"personality\": \"FOOD\",\n  \"laboratoryCode\": \"NOTALAB\",\n  \"sampleReferences\": [\n    \"{{fixedRef}}\"\n  ],\n  \"comment\": \"UKFSS LA API test pack - test sample\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "C4 Send the corrected sample",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"One sample exported\", () => pm.expect(j.sampleCount).to.eql(1));",
+                  "pm.test(\"Our sample is in the batch\", () => pm.expect(j.sampleCodes).to.include(pm.collectionVariables.get(\"fixedRef\")));",
+                  "pm.collectionVariables.set(\"batchId\", j.batchId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-export/submit-to-lab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-export",
+                "submit-to-lab"
+              ]
+            },
+            "description": "Now it goes through.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"personality\": \"FOOD\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"sampleReferences\": [\n    \"{{fixedRef}}\"\n  ],\n  \"comment\": \"UKFSS LA API test pack - test sample\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "C5 An incomplete edit after export is not saved",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"success is false\", () => pm.expect(j.success).to.eql(false));",
+                  "pm.test(\"Error reported for packagingBatchNumber\", () => pm.expect((j.errors || []).map(e => e.field)).to.include(\"packagingBatchNumber\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/save",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "save"
+              ]
+            },
+            "description": "Edits to a sample already sent must still pass validation. Here the batch number is blanked: the edit is refused and nothing is saved. The response data echoes what was sent, not the stored record.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fsRecordTypeCode\": \"FOOD\",\n  \"fsAnalysisTypeCode\": \"C\",\n  \"authorityCode\": \"{{authorityCode}}\",\n  \"authorityOfficeCode\": \"{{officeCode}}\",\n  \"authorityReference\": \"{{authorityReference}}\",\n  \"authorityDateTimeSampleTaken\": \"{{sampleTaken}}\",\n  \"authoritySamplingOfficerCode\": \"{{officerCode}}\",\n  \"authoritySamplingOfficerName\": \"{{officerName}}\",\n  \"authoritySamplingOfficerEmail\": \"{{officerEmail}}\",\n  \"authorityComments\": \"UKFSS LA API test pack - test sample, please ignore\",\n  \"laboratoryCode\": \"{{labCode}}\",\n  \"laboratoryRoutineAnalysisRequired\": false,\n  \"laboratoryAnalysisRequiredDetail\": \"Formaldehyde\",\n  \"premisesBusinessId\": \"BUS-12345\",\n  \"premisesTradingName\": \"Fresh Foods Ltd\",\n  \"premisesFoodHygieneRiskRating\": \"U\",\n  \"premisesFoodStandardsRiskRating\": \"U\",\n  \"premisesTypeCode\": \"E\",\n  \"reasonCode\": \"E\",\n  \"reasonTypeCode\": \"F\",\n  \"detailDescription\": \"API test pack sample\",\n  \"detailCategoryCode\": \"13.01.01.01\",\n  \"detailBrandName\": \"Test\",\n  \"detailNatureOfProductCode\": \"P\",\n  \"detailManufacturer\": \"N/A\",\n  \"detailDistributor\": \"N/A\",\n  \"detailImporter\": \"N/A\",\n  \"detailCountryOfOrigin\": \"China\",\n  \"packagingProvidedCode\": \"C\",\n  \"packagingMaterialCode\": \"O\",\n  \"packagingOtherMaterialDetail\": \"Not specified\",\n  \"packagingBatchNumber\": null,\n  \"durabilityCode\": \"N\",\n  \"durabilityDay\": {{durabilityDay}},\n  \"durabilityMonth\": {{durabilityMonth}},\n  \"durabilityYear\": {{durabilityYear}},\n  \"conditionCode\": \"O\",\n  \"conditionTemperatureWhenTaken\": null,\n  \"codeOfPracticeCompliant\": false,\n  \"codeOfPracticeNotCompliantDetail\": \"Port Health legislative requirements used\",\n  \"codeOfPracticeTransportCompliant\": false,\n  \"fsId\": {{completeFsId}},\n  \"fsReference\": \"{{completeRef}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "C6 The sent sample is unchanged: still sent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); const r = Array.isArray(j) ? j[0] : j;",
+                  "pm.test(\"Still sent (EXPORTED or COMPLETE)\", () => pm.expect([\"EXPORTED\", \"COMPLETE\"]).to.include(r.fsStatusCode));",
+                  "pm.test(\"Batch number unchanged\", () => pm.expect(r.packagingBatchNumber).to.eql(\"TEST-BATCH-001\"));",
+                  "pm.test(\"Same record\", () => pm.expect(r.fsReference).to.eql(pm.collectionVariables.get(\"completeRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-single-record?fsId={{completeFsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-single-record"
+              ],
+              "query": [
+                {
+                  "key": "fsId",
+                  "value": "{{completeFsId}}"
+                }
+              ]
+            },
+            "description": "Still EXPORTED, or COMPLETE if test results have already been returned. Never back to a draft."
+          }
+        }
+      ]
+    },
+    {
+      "name": "D. Results from the Test Laboratory",
+      "description": "Run after MacLaren West has returned test results for your PATST samples (ask support). Results usually show within a few minutes. The API reports the sample as COMPLETE; the result values are in the Portal (Sample Management) and in the Portal's MIS Export.",
+      "item": [
+        {
+          "name": "D1 Complete sample from folder A: COMPLETE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); const r = Array.isArray(j) ? j[0] : j;",
+                  "pm.test(\"Status is COMPLETE\", () => pm.expect(r.fsStatusCode).to.eql(\"COMPLETE\"));",
+                  "pm.test(\"Same record\", () => pm.expect(r.fsReference).to.eql(pm.collectionVariables.get(\"completeRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-single-record?fsId={{completeFsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-single-record"
+              ],
+              "query": [
+                {
+                  "key": "fsId",
+                  "value": "{{completeFsId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "D2 Portal-corrected sample from folder B: COMPLETE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json(); const r = Array.isArray(j) ? j[0] : j;",
+                  "pm.test(\"Status is COMPLETE\", () => pm.expect(r.fsStatusCode).to.eql(\"COMPLETE\"));",
+                  "pm.test(\"Same record\", () => pm.expect(r.fsReference).to.eql(pm.collectionVariables.get(\"draftRef\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sample-entry/get-single-record?fsId={{draftFsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sample-entry",
+                "get-single-record"
+              ],
+              "query": [
+                {
+                  "key": "fsId",
+                  "value": "{{draftFsId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ]
+}
