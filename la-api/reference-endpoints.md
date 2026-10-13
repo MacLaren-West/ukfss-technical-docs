@@ -16,7 +16,7 @@ GET /api/v1/SampleEntry/GetReferenceData?dataType={dataType}       # supported
 GET /api/SampleEntry/GetReferenceData?dataType={dataType}          # supported
 ```
 
-The `dataType` parameter is **case-insensitive**.
+The `dataType` parameter is **case-insensitive**. The four per-key lookups (see [Your Authority](#your-authority-per-key-lookups)) also accept an optional `authorityCode`.
 
 ### Response Shape
 
@@ -64,11 +64,41 @@ The `value` field is the code to use in your sample payload. The `label` is the 
 | `feedDurability` | Durability codes for animal feed |
 | `feedCondition` | Condition codes for animal feed samples |
 | `feedLabelBusinessType` | Label business type codes (`feedLabelBusinessTypeCode`) |
+| `feedPackagingType` | Packaging provided codes (`packagingProvidedCode`) for animal feed |
+| `animalFeedRiskCategory` | Risk category codes for animal feed premises. For animal feed samples these go in `premisesFoodHygieneRiskRating` |
 | `feedReasonTaken` | Reason codes (`reasonCode`) for animal feed samples |
 | `feedReasonType` | Reason type codes (`reasonTypeCode`) for animal feed samples |
 | `feedSurveyBody` | Survey body codes for feed surveillance samples |
 | `feedCategoryLevel2` | Feed category hierarchy — category and sub-category (see below) |
 | `feedAnimalSpecies` | Animal species codes (`feedAnimalSpeciesCode`) — see below |
+
+#### Your Authority (per-key lookups)
+
+These four return only the authorities your API key can submit for, with their own offices, officers and laboratories. Every code they return can be used in a sample payload.
+
+| `dataType` | Description |
+| :--------- | :---------- |
+| `authority` | Your authority codes (`authorityCode`) |
+| `authorityOffice` | Your offices (`authorityOfficeCode`), in full: authority code followed by the office code, e.g. `999HQ` |
+| `authoritySamplingOfficer` | Your sampling officers (`authoritySamplingOfficerCode`), with name and email. Only officers with a code are listed |
+| `laboratory` | The laboratories your authority uses (`laboratoryCode`). If your authority has no list of its own, every active laboratory is returned |
+
+They take an optional `authorityCode` parameter to narrow the result to one of your authorities. Asking for an authority your key can't submit for returns `403`.
+
+```bash
+curl --location 'https://test.ukfss.org.uk/api/v1/sample-entry/get-reference-data?dataType=authorityOffice&authorityCode=999' \
+--header 'Authorization: Bearer {api-key}'
+```
+
+These responses carry an `authorityCode` alongside `value` and `label`. `authoritySamplingOfficer` also returns `email`, `authorityOfficeCode`, `food` and `feed`:
+
+```json
+[
+  { "value": "999HQ", "label": "Headquarters", "authorityCode": "999" }
+]
+```
+
+`authoritySamplingOfficerCode` is your own identifier and isn't checked against this list, but using the listed codes keeps samples matched to the officers set up in UKFSS. `laboratoryCode` must be a valid laboratory code, and on the Test environment `PATST` (the UKFSS Test Laboratory) is recommended.
 
 ---
 
