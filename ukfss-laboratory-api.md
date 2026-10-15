@@ -203,6 +203,7 @@ POST /api/lab/submit-sample-lab-results
 
 - Results may only be submitted for **accepted samples**
 - Submitting results changes the sample's status to **analysis complete**
+- Each sample is matched on `fsReference`; `fsId` is optional. How missing fields are reported is described in [Core Workflow](core-workflow.md#submission-rules)
 
 ### Outcome Fields
 
@@ -274,7 +275,7 @@ An outcome code is made of three parts: a one-letter category, a two-digit type 
 
 | Legacy Name                | API Field                    | Required |
 | -------------------------- | ---------------------------- | -------- |
-| *(New Field)*              | fsId                         | Yes      |
+| *(New Field)*              | fsId                         | No       |
 | SampleNumber               | fsReference                  | Yes      |
 | LocalAuthorityCode         | authorityCode                | Yes      |
 | LocalAuthorityOfficeCode   | authorityOfficeCode          | Yes      |
