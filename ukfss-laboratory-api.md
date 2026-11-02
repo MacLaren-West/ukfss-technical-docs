@@ -94,6 +94,12 @@ Contact MacLaren West support to request an allowlist be added or updated for yo
 GET /api/lab/pending-samples
 ```
 
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+| :-------- | :--- | :------- | :---------- |
+| `includeDescriptions` | boolean | No | If `true`, each sample also carries `detailCategoryText`, `detailCategoryLevel1Code`, `detailCategoryLevel1Text` and `feedAnimalSpeciesDescription`. See [Including Descriptions](core-workflow.md#including-descriptions). Defaults to `false`. |
+
 ### Example Request
 
 ```bash
@@ -332,6 +338,8 @@ GET /api/lab/sample?fsReference={fsReference}
 ```
 
 One of `fsId` or `fsReference` must be provided. Results are scoped to laboratories associated with the calling API key.
+
+Add `includeDescriptions=true` to receive the category and species descriptions, as for [Download Pending Samples](#5-download-pending-samples).
 
 ### Example Request
 

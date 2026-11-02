@@ -17,10 +17,22 @@ GET /api/lab/sample?fsReference={fsReference}
 
 One of `fsId` or `fsReference` must be provided. Results are scoped to laboratories associated with the calling API key.
 
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+| :-------- | :--- | :------- | :---------- |
+| `fsId` | integer | One of `fsId` or `fsReference` | Sample identifier |
+| `fsReference` | string | One of `fsId` or `fsReference` | Sample reference |
+| `includeDescriptions` | boolean | No | If `true`, the sample also carries the text behind its category and animal species codes, as described under [Including Descriptions](core-workflow.md#including-descriptions). Defaults to `false`. |
+
 ### Example Request
 
 ```bash
 curl --location 'https://test.ukfss.org.uk/api/lab/sample?fsId=100001' \
+--header 'api-key: {api-key}'
+
+# With category and species descriptions
+curl --location 'https://test.ukfss.org.uk/api/lab/sample?fsId=100001&includeDescriptions=true' \
 --header 'api-key: {api-key}'
 ```
 

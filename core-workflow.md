@@ -12,6 +12,12 @@
 GET /api/lab/pending-samples
 ```
 
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+| :-------- | :--- | :------- | :---------- |
+| `includeDescriptions` | boolean | No | If `true`, each sample also carries the text behind its category and animal species codes. See [Including Descriptions](#including-descriptions). Defaults to `false`. |
+
 ### Example Request
 
 ```bash
@@ -44,6 +50,44 @@ curl --location 'https://test.ukfss.org.uk/api/lab/pending-samples' \
   ]
 }
 ```
+
+### Including Descriptions
+
+Samples carry codes, such as `detailCategoryCode` and `feedAnimalSpeciesCode`. To receive the matching text alongside them, without looking each code up in the [reference data](reference-endpoints.md#reference-data), add `includeDescriptions=true`:
+
+```bash
+curl --location 'https://test.ukfss.org.uk/api/lab/pending-samples?includeDescriptions=true' \
+--header 'api-key: {api-key}'
+```
+
+Each sample then gains four fields. Every existing field is unchanged.
+
+| Field | Animal feed sample | Food sample |
+| :---- | :----------------- | :---------- |
+| `detailCategoryText` | Sub-category name (level 2) | Category name (level 4) |
+| `detailCategoryLevel1Code` | Top-level category code | Top-level category code |
+| `detailCategoryLevel1Text` | Top-level category name | Top-level category name |
+| `feedAnimalSpeciesDescription` | Animal species description | `null` |
+
+A field is `null` when the sample's code is empty or isn't in the reference data.
+
+**Example (animal feed sample, other fields omitted):**
+
+```json
+{
+  "fsId": 100003,
+  "fsRecordTypeCode": "ANIMAL FEED",
+  "detailCategoryCode": "50.02",
+  "detailCategoryText": "Complementary",
+  "detailCategoryLevel1Code": "50",
+  "detailCategoryLevel1Text": "Compound feeds",
+  "feedAnimalSpeciesCode": "00.01",
+  "feedAnimalSpeciesDescription": "Cattle",
+  ...
+}
+```
+
+The same parameter is available on [Get Individual Sample](reference-endpoints.md#get-individual-sample).
 
 ### Pending Queue Definition
 
