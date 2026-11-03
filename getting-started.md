@@ -63,7 +63,7 @@ Samples leave the pending queue when **accepted**, **rejected**, or **analysed**
 Sample statuses exist to control visibility in the pending queue — the system does not reject results based on status.
 
 - **Accept** — removes the sample from the pending queue; use to acknowledge receipt
-- **Reject** — marks the sample as cancelled and removes it from the pending queue; use if the sample cannot be processed
+- **Reject** — removes the sample from the pending queue and records your reason; use if the sample cannot be processed. The sample itself isn't cancelled
 - **Reset to pending** — returns a previously accepted or rejected sample to the queue
 - A sample can only be reset if **no results have been submitted** for it
 - Once results are submitted, the status cannot be changed

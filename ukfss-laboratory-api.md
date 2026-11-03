@@ -71,15 +71,15 @@ Contact MacLaren West support to request an allowlist be added or updated for yo
 
 ```text
 1. Retrieve pending samples
-2. Accept, reject, or reset each sample
-3. Upload laboratory results for accepted samples
+2. Optionally accept, reject, or reset each sample
+3. Upload laboratory results
 4. Analysed samples leave the pending queue
 ```
 
 ### Behavioural Guarantees
 
-- Samples **must be accepted before results are submitted**
-- Rejected samples are **cancelled** and cannot be processed
+- Results can be submitted **whatever the sample's accept/reject status**; accepting first is optional
+- Rejected samples **leave the pending queue**; rejecting doesn't cancel the sample
 - A rejected sample can be **reset to pending** to undo a rejection, provided no results have been submitted
 - Processed (analysed) samples **cannot be rejected or reset**
 - Analysed samples **do not appear** in the pending queue
@@ -137,9 +137,10 @@ curl --location 'https://test.ukfss.org.uk/api/lab/pending-samples' \
 
 The pending samples queue contains **unprocessed and unaccepted samples only**.
 
-- Accepted but unanalysed samples remain pending  
+- Accepted samples do not appear  
 - Analysed samples do not appear  
-- Cancelled (rejected) samples do not appear  
+- Rejected samples do not appear  
+- A sample reset to pending appears again, however old it is  
 
 ---
 
@@ -190,8 +191,8 @@ POST /api/lab/set-lab-sample-status
 
 ### Status Rules
 
-- Accepted samples appear in the pending queue until results are submitted
-- Rejected samples are marked as **cancelled**; use `reject` if a sample cannot be processed. There is no separate cancel operation
+- Accepted samples leave the pending queue
+- Rejected samples leave the pending queue, with `labStatusDescription` recorded as the reason; use `reject` if a sample cannot be processed. Rejecting doesn't cancel the sample, and there is no separate cancel operation
 - A sample can be **reset to `pending`** to undo an accidental accept or reject, provided no results have been submitted
 - Samples **cannot be rejected or reset once results exist**
 

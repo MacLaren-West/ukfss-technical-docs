@@ -94,7 +94,8 @@ The same parameter is available on [Get Individual Sample](reference-endpoints.m
 The pending queue contains only samples that have **not yet been accepted, rejected, or analysed**.
 
 - Accepted samples do not appear
-- Cancelled (rejected) samples do not appear
+- Rejected samples do not appear
+- A sample reset to pending appears again, however old it is
 - Analysed samples do not appear
 
 ---
@@ -148,7 +149,7 @@ POST /api/lab/set-lab-sample-status
 
 - Statuses control visibility in the pending queue — the system does not reject results based on sample status
 - **Accept** removes the sample from the pending queue
-- **Reject** marks the sample as cancelled and removes it from the pending queue; there is no separate cancel operation
+- **Reject** removes the sample from the pending queue and records `labStatusDescription` as the reason. It doesn't cancel the sample, and there is no separate cancel operation
 - **Reset to pending** returns an accepted or rejected sample to the queue, provided no results have been submitted
 - Once results exist, the status cannot be changed
 
